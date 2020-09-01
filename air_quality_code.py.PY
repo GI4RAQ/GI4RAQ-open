@@ -4101,11 +4101,11 @@ else:
     # calculate the percentage changes in concentrations before and after
     # NO2
     per_change_no2_orig = ((C2_orig - C1_orig)/C1_orig)*100
-    print("NO2 % Change (wind L->R)", per_change_no2_orig, sep = '\n')
+    #print("NO2 % Change (wind L->R)", per_change_no2_orig, sep = '\n')
     
     # PM2.5
     per_change_pm25_orig = ((C4_orig - C3_orig)/C3_orig)*100
-    print("PM 2.5 % Change (wind L->R)", per_change_pm25_orig, sep = '\n')
+    #print("PM 2.5 % Change (wind L->R)", per_change_pm25_orig, sep = '\n')
     
     # _________________________________________________________________________
     # WIND: RIGHT TO LEFT
@@ -4129,8 +4129,8 @@ else:
     per_change_pm25_mir_flipped = flip_conc(C=per_change_pm25_mir)
     l_cumu_flipped = flip_column(l=l_mirror, l_cumu=l_cumu_mirror)
     
-    print("NO2 % Change (wind R->L)", per_change_no2_mir_flipped, sep = "\n")
-    print("PM 2.5 % Change (wind R->L)",per_change_pm25_mir_flipped, sep = '\n')
+    #print("NO2 % Change (wind R->L)", per_change_no2_mir_flipped, sep = "\n")
+    #print("PM 2.5 % Change (wind R->L)",per_change_pm25_mir_flipped, sep = '\n')
     
     # _________________________________________________________________________
     # WIND: PARALLEL
@@ -4166,10 +4166,10 @@ else:
     per_change_no2_par_flipped = flip_conc(C=per_change_no2_par_2)
     per_change_pm25_par_flipped = flip_conc(C=per_change_pm25_par_2)
     
-    print("NO2 % Change (Parallel wind, dimensioning: L->R)", per_change_no2_par_1, sep = '\n')
-    print("NO2 % Change (Parallel wind, dimensioning: R->L - flipped back)",per_change_no2_par_flipped, sep = '\n')
-    print("PM2.5 % Change (Parallel wind, dimensioning: L->R)",per_change_pm25_par_1, sep = '\n')
-    print("PM2.5 % Change (Parallel wind, dimensioning: R->L - flipped back)",per_change_pm25_par_flipped, sep = '\n')
+    #print("NO2 % Change (Parallel wind, dimensioning: L->R)", per_change_no2_par_1, sep = '\n')
+    #print("NO2 % Change (Parallel wind, dimensioning: R->L - flipped back)",per_change_no2_par_flipped, sep = '\n')
+    #print("PM2.5 % Change (Parallel wind, dimensioning: L->R)",per_change_pm25_par_1, sep = '\n')
+    #print("PM2.5 % Change (Parallel wind, dimensioning: R->L - flipped back)",per_change_pm25_par_flipped, sep = '\n')
     
     #__________________________________________________________________________
     # WEIGHT RESULTS BASED ON FREQUENCY OF CLIMATOLOGY
@@ -4198,7 +4198,7 @@ else:
     #print(weighted_row3_no2)
     
     per_change_no2 = np.concatenate((weighted_row1_no2, weighted_row2_no2, weighted_row3_no2))
-    print("Weighted NO2 % Change", per_change_no2, sep = '\n')
+    #print("Weighted NO2 % Change", per_change_no2, sep = '\n')
     
     # pm25 values
     weighted_row1_pm25 = weighting_concs(l_cumu_LR=l_cumu_original, l_cumu_RL=l_cumu_flipped, 
@@ -4223,7 +4223,7 @@ else:
     #print(weighted_row3_pm25)
     
     per_change_pm25 = np.concatenate((weighted_row1_pm25, weighted_row2_pm25, weighted_row3_pm25))
-    print("Weighted PM2.5 % Change", per_change_pm25, sep = '\n')
+    #print("Weighted PM2.5 % Change", per_change_pm25, sep = '\n')
     
     
     # format to correct layout for feeding back to UI
