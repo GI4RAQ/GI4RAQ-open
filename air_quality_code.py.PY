@@ -20,26 +20,28 @@ from scipy.linalg import solve
 import math as math
 from statistics import mean
 
-# note: there will be a warning symbol for line 22 if you are using a static
+# note: there will be a warning symbol for 'import sys' if you are using a static
 # string below to obtain user info, but sys is needed for dynamic base64 
 # loading. Warning can be ignored, code will still run without issue
-#import sys
+import sys
 
-# met data
+# for met data
 from shapely.geometry import Point, MultiPoint
 from shapely.ops import nearest_points
 import pandas as pd
 
-# set container for error flags
+# set container for error flags - this will be checked before final calculations
 error = np.zeros((10,10))
 
 ###############################################################################
 # DATA FROM USER INTERFACE CONTAINING INFORMATION ON STREET LAYOUT
 ###############################################################################
 
+# ___________ dynamic info from user interface ___________
 #if using a dynamic base64 string: uncomment line below and comment out explicit base64 & json conversion
 #content = json.loads(base64.b64decode(sys.argv[1]).decode('utf8'))
 
+# ___________ static info for testing purposes ___________
 # mirror test completed on this layout:
 #base64_test = "eyJpZCI6ODMsInByb2plY3RzX2lkIjozOCwiYXV0aG9yX2lkIjozMCwibmFtZSI6IkV4YW1wbGUgQW5hbHlzaXMiLCJ0YWciOiJleGFtcGxlLWFuYWx5c2lzIiwid2luZCI6ImxlZnQiLCJvYmplY3RzIjoiW3tcInR5cGVcIjpcImJ1aWxkaW5nXCIsXCJuYW1lXCI6XCJCTDFcIixcIm9yZGVyXCI6MCxcImxvY2tlZFwiOnRydWUsXCJoZWlnaHRcIjpcIjI0LjNcIixcIndpZHRoXCI6XCIyXCIsXCJ3aGVyZVwiOlwic3RyZWV0dG9lbmRcIn0se1widHlwZVwiOlwicmN6XCIsXCJuYW1lXCI6XCJSWkJMMVwiLFwib3JkZXJcIjoxLFwibG9ja2VkXCI6dHJ1ZSxcIndpZHRoXCI6XCIxMC4xXCIsXCJnYlwiOlt7XCJuYW1lXCI6XCJFQjFcIixcInR5cGVcIjpcImdyZXktYmFycmllclwiLFwibWV0ZXJzaW56b25lXCI6XCIxMFwiLFwiaGVpZ2h0XCI6XCIxLjZcIixcIndpZHRoXCI6XCIwLjJcIixcImxhZFwiOlwiMjBcIixcInNwZWNpZXNcIjpudWxsLFwiYWFwXCI6bnVsbCxcImFhbVwiOm51bGwsXCJleHBlY3RlZGxpZmV0aW1lXCI6bnVsbCxcInRhYXBcIjpudWxsLFwidGN0aFwiOm51bGwsXCJ0Y2JoXCI6bnVsbCxcInRhYW1cIjpudWxsLFwidGZvcm1cIjpudWxsLFwidHNwZWNpZXNcIjpudWxsLFwidGVsXCI6bnVsbCxcInRzcFwiOm51bGwsXCJ0bGFkXCI6XCIyMFwiLFwidHN3XCI6bnVsbCxcIm9yZGVyXCI6MH1dLFwid2hlcmVcIjpcInN0cmVldHRvZW5kXCIsXCJnaVwiOltdfSx7XCJ0eXBlXCI6XCJtYXJrZXJcIixcIm5hbWVcIjpcIlN0cmVldCBCb3VuZGFyeSAxXCIsXCJvcmRlclwiOjIsXCJsb2NrZWRcIjp0cnVlLFwic3VidHlwZVwiOlwiZWRnZVwifSx7XCJvcmRlclwiOjAsXCJ0eXBlXCI6XCJyY3pcIixcIm5hbWVcIjpcIlJaMVwiLFwiaGVpZ2h0XCI6MCxcIndpZHRoXCI6XCI0LjNcIixcImN1cnJlbnRfZXhwb3N1cmVfbm8yXCI6XCIyXCIsXCJjdXJyZW50X2V4cG9zdXJlX1BNMl81XCI6XCIzXCIsXCJ2bW92ZW1lbnRcIjpudWxsLFwiZ2lcIjpbXSxcIndoZXJlXCI6XCJzdHJlZXRva2VyYlwifSx7XCJ0eXBlXCI6XCJuZXV0cmFsXCIsXCJuYW1lXCI6XCJOWjFcIixcImhlaWdodFwiOjAsXCJ3aWR0aFwiOlwiMlwiLFwiY3VycmVudF9leHBvc3VyZV9ubzJcIjpudWxsLFwiY3VycmVudF9leHBvc3VyZV9QTTJfNVwiOm51bGwsXCJ3aGVyZVwiOlwic3RyZWV0b2tlcmJcIixcImdpXCI6W119LHtcInR5cGVcIjpcIm1hcmtlclwiLFwibmFtZVwiOlwiS2VyYiAxXCIsXCJvcmRlclwiOjIsXCJsb2NrZWRcIjpmYWxzZSxcInN1YnR5cGVcIjpcImtlcmJcIn0se1widHlwZVwiOlwiZW16XCIsXCJuYW1lXCI6XCJFWjFcIixcIm9yZGVyXCI6MyxcImxvY2tlZFwiOmZhbHNlLFwid2lkdGhcIjpcIjEyLjRcIixcImN1cnJlbnRfZXhwb3N1cmVfbm8yXCI6XCIzXCIsXCJjdXJyZW50X2V4cG9zdXJlX1BNMl81XCI6XCIzXCIsXCJ3aGVyZVwiOlwia2VyYnRva2VyYlwifSx7XCJvcmRlclwiOjAsXCJ0eXBlXCI6XCJuZXV0cmFsXCIsXCJuYW1lXCI6XCJOWjJcIixcImhlaWdodFwiOjAsXCJ3aWR0aFwiOlwiMi42XCIsXCJjdXJyZW50X2V4cG9zdXJlX25vMlwiOm51bGwsXCJjdXJyZW50X2V4cG9zdXJlX1BNMl81XCI6bnVsbCxcInZtb3ZlbWVudFwiOm51bGwsXCJ3aGVyZVwiOlwia2VyYnRva2VyYlwiLFwiZ2lcIjpbXX0se1widHlwZVwiOlwiZW16XCIsXCJuYW1lXCI6XCJFWjJcIixcImhlaWdodFwiOjAsXCJ3aWR0aFwiOlwiMTAuNFwiLFwiY3VycmVudF9leHBvc3VyZV9ubzJcIjpcIjJcIixcImN1cnJlbnRfZXhwb3N1cmVfUE0yXzVcIjpcIjJcIixcInZtb3ZlbWVudFwiOlwiMTBcIixcIndoZXJlXCI6XCJrZXJidG9rZXJiXCJ9LHtcInR5cGVcIjpcIm5ldXRyYWxcIixcIm5hbWVcIjpcIk5aM1wiLFwiaGVpZ2h0XCI6MCxcIndpZHRoXCI6XCIyXCIsXCJjdXJyZW50X2V4cG9zdXJlX25vMlwiOm51bGwsXCJjdXJyZW50X2V4cG9zdXJlX1BNMl81XCI6bnVsbCxcIndoZXJlXCI6XCJrZXJidG9rZXJiXCIsXCJnaVwiOltdfSx7XCJ0eXBlXCI6XCJtYXJrZXJcIixcIm5hbWVcIjpcIktlcmIgMlwiLFwib3JkZXJcIjoyLFwibG9ja2VkXCI6ZmFsc2UsXCJzdWJ0eXBlXCI6XCJrZXJiXCJ9LHtcInR5cGVcIjpcInJjelwiLFwibmFtZVwiOlwiUloyXCIsXCJoZWlnaHRcIjowLFwid2lkdGhcIjpcIjEwLjhcIixcImN1cnJlbnRfZXhwb3N1cmVfbm8yXCI6XCIyXCIsXCJjdXJyZW50X2V4cG9zdXJlX1BNMl81XCI6XCIzXCIsXCJnaVwiOlt7XCJuYW1lXCI6XCJUcmVlbkxpbmVcIixcInR5cGVcIjpcImdyZWVuLWJhcnJpZXItdHJlZXNcIixcIm1ldGVyc2luem9uZVwiOlwiMi40XCIsXCJoZWlnaHRcIjpcIjIuNlwiLFwid2lkdGhcIjpcIjAuOVwiLFwibGFkXCI6XCIyMFwiLFwic3BlY2llc1wiOlwiZXZlcmdyZWVuXCIsXCJhYXBcIjpcIjFcIixcImFhbVwiOlwiMlwiLFwiZXhwZWN0ZWRsaWZldGltZVwiOlwiM1wiLFwidGFhcFwiOlwiMVwiLFwidGN0aFwiOlwiMTBcIixcInRjYmhcIjpcIjVcIixcInRhYW1cIjpcIjVcIixcInRmb3JtXCI6XCJ1bmtub3duXCIsXCJ0c3BlY2llc1wiOlwiZGVjaWR1b3VzXCIsXCJ0ZWxcIjpcIjJcIixcInRzcFwiOlwiOFwiLFwidGxhZFwiOlwiMjBcIixcInRzd1wiOm51bGwsXCJvcmRlclwiOjAsXCJ0Y3dcIjpcIjZcIn1dLFwiZ2JcIjpbXSxcIndoZXJlXCI6XCJzdHJlZXRva2VyYlwifSx7XCJ0eXBlXCI6XCJtYXJrZXJcIixcIm5hbWVcIjpcIlN0cmVldCBCb3VuZGFyeSAyXCIsXCJvcmRlclwiOjQsXCJsb2NrZWRcIjp0cnVlLFwic3VidHlwZVwiOlwiZWRnZVwifSx7XCJ0eXBlXCI6XCJyY3pcIixcIm5hbWVcIjpcIlJaQkwyXCIsXCJvcmRlclwiOjUsXCJsb2NrZWRcIjp0cnVlLFwid2lkdGhcIjpcIjUuMVwiLFwiZ2JcIjpbe1wibmFtZVwiOlwiRUIyXCIsXCJ0eXBlXCI6XCJncmV5LWJhcnJpZXJcIixcIm1ldGVyc2luem9uZVwiOjAsXCJoZWlnaHRcIjpcIjFcIixcIndpZHRoXCI6XCIwLjRcIixcImxhZFwiOlwiMzBcIixcInNwZWNpZXNcIjpudWxsLFwiYWFwXCI6bnVsbCxcImFhbVwiOm51bGwsXCJleHBlY3RlZGxpZmV0aW1lXCI6bnVsbCxcInRhYXBcIjpudWxsLFwidGN0aFwiOm51bGwsXCJ0Y2JoXCI6bnVsbCxcInRhYW1cIjpudWxsLFwidGZvcm1cIjpudWxsLFwidHNwZWNpZXNcIjpudWxsLFwidGVsXCI6bnVsbCxcInRzcFwiOm51bGwsXCJ0bGFkXCI6XCI0MFwiLFwidHN3XCI6bnVsbCxcIm9yZGVyXCI6MH1dLFwid2hlcmVcIjpcInN0cmVldHRvZW5kXCIsXCJnaVwiOltdfSx7XCJ0eXBlXCI6XCJidWlsZGluZ1wiLFwibmFtZVwiOlwiQkwyXCIsXCJvcmRlclwiOjYsXCJsb2NrZWRcIjp0cnVlLFwiaGVpZ2h0XCI6XCIyMS4yXCIsXCJ3aWR0aFwiOlwiMlwiLFwid2hlcmVcIjpcInN0cmVldHRvZW5kXCJ9XSIsImxvY2tlZCI6MSwiUE0yNSI6NDUsIk5PMiI6NDUsImNyZWF0ZWRfYXQiOiIyMDE5LTEyLTAzIDEzOjU4OjQ5IiwidXBkYXRlZF9hdCI6IjIwMTktMTItMDMgMTM6NTg6NDkiLCJkZWxldGVkX2F0IjpudWxsfQ=="
 
@@ -49,8 +51,10 @@ base64_test = "eyJpZCI6MjgwLCJwcm9qZWN0c19pZCI6ODMsImF1dGhvcl9pZCI6MjMsImxhdCI6I
 # decode the base 64 string into JSON format
 content = json.loads(base64.b64decode(base64_test))
 
-# display ALL the information from user interface
-print(json.dumps(content, indent = 4))
+# ___________ same from now on ___________
+
+# display ALL the information from user interface (uncomment to see)
+#print(json.dumps(content, indent = 4))
 
 # extract the "objects" field 
 objects = content["objects"]
@@ -58,20 +62,16 @@ objects = content["objects"]
 # and convert to a list of dictionaries:
 objects = json.loads(objects)
 
-# for visual inspection:
-print(json.dumps(objects, indent = 4))
+# for visual inspection (uncomment to see):
+#print(json.dumps(objects, indent = 4))
 
 
 
 # ___________ extract background pollution concentrations ___________
 
-# Question:
-# which variable name to use? Noticed in more recent base64 there are also
-# fields called 'no2_bg_concentration' and 'pm2p5_bg_concentration'
+cB_no2 = content["no2_bg_concentration"] # UNIT: ug/m3 
 
-cB_no2 = content["no2_bg_concentration"] # ug/m3 
-
-cB_pm25 = content["pm2p5_bg_concentration"] # ug/m3 
+cB_pm25 = content["pm2p5_bg_concentration"] # UNIT: ug/m3 
 
 
 # ___________ climatological wind characteristics ___________
@@ -81,15 +81,11 @@ cB_pm25 = content["pm2p5_bg_concentration"] # ug/m3
 # read in the met station sites from the github repository
 # (to get the path go on the file, click 'raw', and copy the URL)
 
-#url = 'https://raw.githubusercontent.com/cyberstorm305/GI4RAQ/master/meteorology/locations.csv?token=AKV3G2TIICY7EE2A3BBXCOK7IZYU6'
-#sites_df = pd.read_csv(url)
-# I think this URL is timing out because it's currently private - move to opensource GitHub location?
+url = 'https://raw.githubusercontent.com/pearce-helen/GI4RAQ-open/master/meteorology/locations.csv'
+sites_df = pd.read_csv(url)
 
-# offline version for reference:
-sites_df = pd.read_csv("C:/Users/helen/OneDrive/Documents/GitHub/GI4RAQ/meteorology/locations.csv")
-
-print(sites_df)
-#print(sites_df['latitude'][0])
+# visual inspection
+#print(sites_df)
 
 # combine all possible met station locations into 1 vector
 points = []
@@ -101,7 +97,7 @@ destinations = MultiPoint(points)
 #print(destinations)
 
 # set street location
-# extract the location of the street, float to ensure correct format
+# extract the location of the street, type float to ensure correct format
 latitude = float(content["lat"])
 longitude = float(content["lng"])
 
@@ -110,18 +106,21 @@ orig = (longitude, latitude)
 orig = Point(orig)
 #print(orig)
 
-# find the nearest met station
+# find the nearest met station to the street
 # website for reference: https://automating-gis-processes.github.io/2017/lessons/L3/nearest-neighbour.html
 nearest_site = nearest_points(orig, destinations)
-nearest_met = nearest_site[1]
+# nearest_site[0] is the origin (street) while nearest_site[1] is the closest destination
+nearest_met = nearest_site[1] 
+# extract the x y (lon, lat) for the closest station
 nearest_met_lat = nearest_met.y
 nearest_met_lon = nearest_met.x
-
+# select the site ID from the sites_df
 station_id = sites_df.loc[(sites_df['latitude'] == nearest_met_lat) & (sites_df['longitude'] == nearest_met_lon), 'station'].item()
-print(orig, station_id)
+# visual inspection
+#print(orig, station_id)
 
 station_id = int(station_id)
-chr(station_id)
+# the station ID will be used to pull in the correct wind data file from github
 
 # _______________ calculate weighted L-R and R-L cross-canyon wind speed (u) _______________
 
@@ -162,22 +161,28 @@ elif street_dir_chr == "NW":
 elif street_dir_chr == "NNW":
     street_dir = 337.5
 
-print(street_dir)
+# visual inspection
+#print(street_dir)
 
 # select the station data based on the above:
-root = "https://raw.githubusercontent.com/cyberstorm305/GI4RAQ/master/meteorology/"
+root = "https://raw.githubusercontent.com/pearce-helen/GI4RAQ-open/master/meteorology/"
+# combine the root and the station info into correct URL
 url_station = (f"{root}station{station_id}.csv")
+# visual inspection
 #print(url_station)
 
-# read in wind data
-#wind = pd.read_csv(url_station)
-# offline
-wind = pd.read_csv("C:/Users/helen/OneDrive/Documents/GitHub/GI4RAQ/meteorology/station161.csv")
+# read in wind data from github
+wind = pd.read_csv(url_station)
+
+# visual inspection
+#print(wind)
 
 # wind stored in a pandas dataframe
-# developing with a pandas dataframe is different to in R,
-# several potholes fallen in, so safest way to calculate things is to define
-# a function first and then apply it using the lambda method
+# developing with a pandas dataframe is different to in R, safest way to 
+# calculate things is to define a function first and then apply it using 
+# the lambda method. 
+# Also remember .copy() if making a new dataframe - ensures not just 'viewing'
+# a dataframe but actually making alterations
 
 # remove wind direction = 0 as per the PPT 0 should always be treated as parallel
 # we can drop this here as we'll only ever work out the L-R occurence and R-L occurence directly,
@@ -227,9 +232,11 @@ RL_only["RL_dif_rad"] = RL_only.apply(lambda RL_only: calculate_radians(RL_only[
 
 
 # calculate the perpendicular component (across canyon) of each of the wind vectors
-# IMPORTANT: then angles calculated only need to be relative to the perpendicular
+
+# IMPORTANT: the angles calculated only need to be relative to the perpendicular
 # but need to still use the original wind speed values from the original wind directions
 # that they represent
+
 # cosine used as the hypotenuse of a right-angled triangle is the original wind speed
 # the acute angle has been calculated (theta - relative to the perpendicular)
 # and the adjacent side of the right-angled triangle represents the cross-street
@@ -242,7 +249,7 @@ RL_only["RL_u"] = RL_only.apply(lambda RL_only: calculate_u(RL_only['RL_dif_rad'
 
 
 # weighting of wind sectors needed to give greater 'weight' to the wind speeds
-# that occur more frequently, and vice versa
+# and directions that occur more frequently, and vice versa
 # firstly calculate how frequently the total sector of L-R and R-L occurs
 LR_freq = LR_only['fractional_occur'].sum()
 RL_freq = RL_only['fractional_occur'].sum()
@@ -254,8 +261,7 @@ LR_only["LR_u_weighted"] = LR_only.apply(lambda LR_only: weighted_u(LR_only['fra
 RL_only["RL_u_weighted"] = RL_only.apply(lambda RL_only: weighted_u(RL_only['fractional_occur'], RL_only['RL_u'],RL_freq), axis=1)
 
 
-
-# now sum the fractional wind speed components
+# finally sum the fractional wind speed components
 LR_u = LR_only['LR_u_weighted'].sum()
 RL_u = RL_only['RL_u_weighted'].sum()
 
@@ -274,6 +280,7 @@ RL_u = RL_only['RL_u_weighted'].sum()
 #print(RL_only['wind_speed'])
 #print(RL_only['RL_u'])
 
+# _______________ assign values for use further in code _______________
 
 # wind speed left to right (m/s) - climatological average
 ubg_orig = LR_u
