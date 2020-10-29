@@ -3888,6 +3888,157 @@ d4_mir[13] = (we3_mir[4,4] - beta(wa3_mir[4,4])*wa3_mir[4,4])*cB_pm25
 d4_mir[14] = (we3_mir[4,5] - beta(wa3_mir[4,5])*wa3_mir[4,5])*cB_pm25
 
 ###############################################################################
+# d1_orig_par = inputs for existing conditions, NO2
+d1_orig_par = np.array([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], dtype = float)
+d1_orig_par[0] = ez_tot_no2_orig[1]/l_original[1] # averaging line emission source over area of 'ground' = (ug/m2/s)
+d1_orig_par[1] = ez_tot_no2_orig[2]/l_original[2]
+d1_orig_par[2] = ez_tot_no2_orig[3]/l_original[3]
+d1_orig_par[3] = ez_tot_no2_orig[4]/l_original[4]
+d1_orig_par[4] = ez_tot_no2_orig[5]/l_original[5]
+d1_orig_par[5] = 0      # no inputs into middle boxes from either emissions or background
+d1_orig_par[6] = 0
+d1_orig_par[7] = 0
+d1_orig_par[8] = 0
+d1_orig_par[9] = 0
+d1_orig_par[10] = (we1_par[4,1] - beta(wa1_par[4,1])*wa1_par[4,1])*cB_no2  # background inputs into top boxes
+d1_orig_par[11] = (we1_par[4,2] - beta(wa1_par[4,2])*wa1_par[4,2])*cB_no2  # negative for beta because if true, the sign of W[4,x] would be negative
+d1_orig_par[12] = (we1_par[4,3] - beta(wa1_par[4,3])*wa1_par[4,3])*cB_no2  # yet as here being treated as an input, it should be positive, hence signs cancel out
+d1_orig_par[13] = (we1_par[4,4] - beta(wa1_par[4,4])*wa1_par[4,4])*cB_no2
+d1_orig_par[14] = (we1_par[4,5] - beta(wa1_par[4,5])*wa1_par[4,5])*cB_no2
+
+
+# d2_orig_par = inputs for new conditions, NO2
+d2_orig_par = np.array([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], dtype = float)
+d2_orig_par[0] = ez_tot_no2_orig[1]/l_original[1] # averaging line emission source over area of 'ground' = (ug/m2/s)
+d2_orig_par[1] = ez_tot_no2_orig[2]/l_original[2]
+d2_orig_par[2] = ez_tot_no2_orig[3]/l_original[3]
+d2_orig_par[3] = ez_tot_no2_orig[4]/l_original[4]
+d2_orig_par[4] = ez_tot_no2_orig[5]/l_original[5]
+d2_orig_par[5] = 0      # no inputs into middle boxes from either emissions or background
+d2_orig_par[6] = 0
+d2_orig_par[7] = 0
+d2_orig_par[8] = 0
+d2_orig_par[9] = 0
+d2_orig_par[10] = (we3_par[4,1] - beta(wa3_par[4,1])*wa3_par[4,1])*cB_no2  # background inputs into top boxes
+d2_orig_par[11] = (we3_par[4,2] - beta(wa3_par[4,2])*wa3_par[4,2])*cB_no2  # negative for beta because if true, the sign of W[4,x] would be negative
+d2_orig_par[12] = (we3_par[4,3] - beta(wa3_par[4,3])*wa3_par[4,3])*cB_no2  # yet as here being treated as an input, it should be positive, hence signs cancel out
+d2_orig_par[13] = (we3_par[4,4] - beta(wa3_par[4,4])*wa3_par[4,4])*cB_no2
+d2_orig_par[14] = (we3_par[4,5] - beta(wa3_par[4,5])*wa3_par[4,5])*cB_no2
+
+
+# d3_orig_par = inputs for existing conditions, PM2.5
+d3_orig_par = np.array([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], dtype = float)
+d3_orig_par[0] = ez_tot_pm25_orig[1]/l_original[1] # averaging line emission source over area of 'ground' = (ug/m2/s)
+d3_orig_par[1] = ez_tot_pm25_orig[2]/l_original[2]
+d3_orig_par[2] = ez_tot_pm25_orig[3]/l_original[3]
+d3_orig_par[3] = ez_tot_pm25_orig[4]/l_original[4]
+d3_orig_par[4] = ez_tot_pm25_orig[5]/l_original[5]
+d3_orig_par[5] = 0      # no inputs into middle boxes from either emissions or background
+d3_orig_par[6] = 0
+d3_orig_par[7] = 0
+d3_orig_par[8] = 0
+d3_orig_par[9] = 0
+d3_orig_par[10] = (we1_par[4,1] - beta(wa1_par[4,1])*wa1_par[4,1])*cB_pm25  # background inputs into top boxes
+d3_orig_par[11] = (we1_par[4,2] - beta(wa1_par[4,2])*wa1_par[4,2])*cB_pm25  # negative for beta because if true, the sign of W[4,x] would be negative
+d3_orig_par[12] = (we1_par[4,3] - beta(wa1_par[4,3])*wa1_par[4,3])*cB_pm25  # yet as here being treated as an input, it should be positive, hence signs cancel out
+d3_orig_par[13] = (we1_par[4,4] - beta(wa1_par[4,4])*wa1_par[4,4])*cB_pm25
+d3_orig_par[14] = (we1_par[4,5] - beta(wa1_par[4,5])*wa1_par[4,5])*cB_pm25
+
+
+# d4_orig_par = inputs for new conditions, PM2.5
+d4_orig_par = np.array([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], dtype = float)
+d4_orig_par[0] = ez_tot_pm25_orig[1]/l_original[1] # averaging line emission source over area of 'ground' = (ug/m2/s)
+d4_orig_par[1] = ez_tot_pm25_orig[2]/l_original[2]
+d4_orig_par[2] = ez_tot_pm25_orig[3]/l_original[3]
+d4_orig_par[3] = ez_tot_pm25_orig[4]/l_original[4]
+d4_orig_par[4] = ez_tot_pm25_orig[5]/l_original[5]
+d4_orig_par[5] = 0      # no inputs into middle boxes from either emissions or background
+d4_orig_par[6] = 0
+d4_orig_par[7] = 0
+d4_orig_par[8] = 0
+d4_orig_par[9] = 0
+d4_orig_par[10] = (we3_par[4,1] - beta(wa3_par[4,1])*wa3_par[4,1])*cB_pm25  # background inputs into top boxes
+d4_orig_par[11] = (we3_par[4,2] - beta(wa3_par[4,2])*wa3_par[4,2])*cB_pm25  # negative for beta because if true, the sign of W[4,x] would be negative
+d4_orig_par[12] = (we3_par[4,3] - beta(wa3_par[4,3])*wa3_par[4,3])*cB_pm25  # yet as here being treated as an input, it should be positive, hence signs cancel out
+d4_orig_par[13] = (we3_par[4,4] - beta(wa3_par[4,4])*wa3_par[4,4])*cB_pm25
+d4_orig_par[14] = (we3_par[4,5] - beta(wa3_par[4,5])*wa3_par[4,5])*cB_pm25
+
+# d1_mir_par = inputs for existing conditions, NO2
+d1_mir_par = np.array([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], dtype = float)
+d1_mir_par[0] = ez_tot_no2_mir[1]/l_mirror[1] # averaging line emission source over area of 'ground' = (ug/m2/s)
+d1_mir_par[1] = ez_tot_no2_mir[2]/l_mirror[2]
+d1_mir_par[2] = ez_tot_no2_mir[3]/l_mirror[3]
+d1_mir_par[3] = ez_tot_no2_mir[4]/l_mirror[4]
+d1_mir_par[4] = ez_tot_no2_mir[5]/l_mirror[5]
+d1_mir_par[5] = 0      # no inputs into middle boxes from either emissions or background
+d1_mir_par[6] = 0
+d1_mir_par[7] = 0
+d1_mir_par[8] = 0
+d1_mir_par[9] = 0
+d1_mir_par[10] = (we2_par[4,1] - beta(wa2_par[4,1])*wa2_par[4,1])*cB_no2  # background inputs into top boxes
+d1_mir_par[11] = (we2_par[4,2] - beta(wa2_par[4,2])*wa2_par[4,2])*cB_no2  # negative for beta because if true, the sign of W[4,x] would be negative
+d1_mir_par[12] = (we2_par[4,3] - beta(wa2_par[4,3])*wa2_par[4,3])*cB_no2  # yet as here being treated as an input, it should be positive, hence signs cancel out
+d1_mir_par[13] = (we2_par[4,4] - beta(wa2_par[4,4])*wa2_par[4,4])*cB_no2
+d1_mir_par[14] = (we2_par[4,5] - beta(wa2_par[4,5])*wa2_par[4,5])*cB_no2
+
+
+# d2_mir_par = inputs for new conditions, NO2
+d2_mir_par = np.array([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], dtype = float)
+d2_mir_par[0] = ez_tot_no2_mir[1]/l_mirror[1] # averaging line emission source over area of 'ground' = (ug/m2/s)
+d2_mir_par[1] = ez_tot_no2_mir[2]/l_mirror[2]
+d2_mir_par[2] = ez_tot_no2_mir[3]/l_mirror[3]
+d2_mir_par[3] = ez_tot_no2_mir[4]/l_mirror[4]
+d2_mir_par[4] = ez_tot_no2_mir[5]/l_mirror[5]
+d2_mir_par[5] = 0      # no inputs into middle boxes from either emissions or background
+d2_mir_par[6] = 0
+d2_mir_par[7] = 0
+d2_mir_par[8] = 0
+d2_mir_par[9] = 0
+d2_mir_par[10] = (we4_par[4,1] - beta(wa4_par[4,1])*wa4_par[4,1])*cB_no2  # background inputs into top boxes
+d2_mir_par[11] = (we4_par[4,2] - beta(wa4_par[4,2])*wa4_par[4,2])*cB_no2  # negative for beta because if true, the sign of W[4,x] would be negative
+d2_mir_par[12] = (we4_par[4,3] - beta(wa4_par[4,3])*wa4_par[4,3])*cB_no2  # yet as here being treated as an input, it should be positive, hence signs cancel out
+d2_mir_par[13] = (we4_par[4,4] - beta(wa4_par[4,4])*wa4_par[4,4])*cB_no2
+d2_mir_par[14] = (we4_par[4,5] - beta(wa4_par[4,5])*wa4_par[4,5])*cB_no2
+
+
+# d3_mir_par = inputs for existing conditions, PM2.5
+d3_mir_par = np.array([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], dtype = float)
+d3_mir_par[0] = ez_tot_pm25_mir[1]/l_mirror[1] # averaging line emission source over area of 'ground' = (ug/m2/s)
+d3_mir_par[1] = ez_tot_pm25_mir[2]/l_mirror[2]
+d3_mir_par[2] = ez_tot_pm25_mir[3]/l_mirror[3]
+d3_mir_par[3] = ez_tot_pm25_mir[4]/l_mirror[4]
+d3_mir_par[4] = ez_tot_pm25_mir[5]/l_mirror[5]
+d3_mir_par[5] = 0      # no inputs into middle boxes from either emissions or background
+d3_mir_par[6] = 0
+d3_mir_par[7] = 0
+d3_mir_par[8] = 0
+d3_mir_par[9] = 0
+d3_mir_par[10] = (we2_par[4,1] - beta(wa2_par[4,1])*wa2_par[4,1])*cB_pm25  # background inputs into top boxes
+d3_mir_par[11] = (we2_par[4,2] - beta(wa2_par[4,2])*wa2_par[4,2])*cB_pm25  # negative for beta because if true, the sign of W[4,x] would be negative
+d3_mir_par[12] = (we2_par[4,3] - beta(wa2_par[4,3])*wa2_par[4,3])*cB_pm25  # yet as here being treated as an input, it should be positive, hence signs cancel out
+d3_mir_par[13] = (we2_par[4,4] - beta(wa2_par[4,4])*wa2_par[4,4])*cB_pm25
+d3_mir_par[14] = (we2_par[4,5] - beta(wa2_par[4,5])*wa2_par[4,5])*cB_pm25
+
+
+# d4_mir_par = inputs for new conditions, PM2.5
+d4_mir_par = np.array([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], dtype = float)
+d4_mir_par[0] = ez_tot_pm25_mir[1]/l_mirror[1] # averaging line emission source over area of 'ground' = (ug/m2/s)
+d4_mir_par[1] = ez_tot_pm25_mir[2]/l_mirror[2]
+d4_mir_par[2] = ez_tot_pm25_mir[3]/l_mirror[3]
+d4_mir_par[3] = ez_tot_pm25_mir[4]/l_mirror[4]
+d4_mir_par[4] = ez_tot_pm25_mir[5]/l_mirror[5]
+d4_mir_par[5] = 0      # no inputs into middle boxes from either emissions or background
+d4_mir_par[6] = 0
+d4_mir_par[7] = 0
+d4_mir_par[8] = 0
+d4_mir_par[9] = 0
+d4_mir_par[10] = (we4_par[4,1] - beta(wa4_par[4,1])*wa4_par[4,1])*cB_pm25  # background inputs into top boxes
+d4_mir_par[11] = (we4_par[4,2] - beta(wa4_par[4,2])*wa4_par[4,2])*cB_pm25  # negative for beta because if true, the sign of W[4,x] would be negative
+d4_mir_par[12] = (we4_par[4,3] - beta(wa4_par[4,3])*wa4_par[4,3])*cB_pm25  # yet as here being treated as an input, it should be positive, hence signs cancel out
+d4_mir_par[13] = (we4_par[4,4] - beta(wa4_par[4,4])*wa4_par[4,4])*cB_pm25
+d4_mir_par[14] = (we4_par[4,5] - beta(wa4_par[4,5])*wa4_par[4,5])*cB_pm25
+
+###############################################################################
 # CALCULATE & SEND DATA BACK
 ###############################################################################
 
@@ -4140,12 +4291,12 @@ else:
     # WIND: PARALLEL
     # NO2
     # dimensioning from left to right
-    C1_par_1 = solve(a1_par_1, d1_orig)
-    C2_par_1 = solve(a2_par_1, d2_orig)
+    C1_par_1 = solve(a1_par_1, d1_orig_par)
+    C2_par_1 = solve(a2_par_1, d2_orig_par)
     
     # dimensioning from right to left
-    C1_par_2 = solve(a1_par_2, d1_mir)
-    C2_par_2 = solve(a2_par_2, d2_mir)
+    C1_par_2 = solve(a1_par_2, d1_mir_par)
+    C2_par_2 = solve(a2_par_2, d2_mir_par)
     
     # % change of NO2 based on dispersion only (parallel wind) with dimensioning from wind left-to-right
     per_change_no2_par_1 = ((C2_par_1 - C1_par_1)/C1_par_1)*100
@@ -4154,12 +4305,12 @@ else:
     
     # PM2.5
     # dimensioning from left to right
-    C3_par_1 = solve(a1_par_1, d3_orig)
-    C4_par_1 = solve(a2_par_1, d4_orig)
+    C3_par_1 = solve(a1_par_1, d3_orig_par)
+    C4_par_1 = solve(a2_par_1, d4_orig_par)
     
     # dimensioning from right to left
-    C3_par_2 = solve(a1_par_2, d3_mir)
-    C4_par_2 = solve(a2_par_2, d4_mir)
+    C3_par_2 = solve(a1_par_2, d3_mir_par)
+    C4_par_2 = solve(a2_par_2, d4_mir_par)
     
     # % change of PM2.5 based on dispersion only (parallel wind) with dimensioning from wind left-to-right
     per_change_pm25_par_1 = ((C4_par_1 - C3_par_1)/C3_par_1)*100
