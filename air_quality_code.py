@@ -2161,7 +2161,7 @@ wa1_mir = no_barriers_mir[3]
 # 1) ----- define functions -----
 # 1a) flow effected by barrier placed outside the recirculation zone
 
-def bar_outside(obs, bar_col, bar_recirc, ue, ua, we, wa, h, l):
+def bar_outside(obs, bar_col, bar_recirc, ue, ua, we, wa, h, l, l_cumu):
     # dispersion at barrier: reduce dispersion that it currently is by barrier effect
     # ue1[1,(bar_col+1)] = (1-obs)*ue1[1,(bar_col+1)]
     
@@ -2181,7 +2181,7 @@ def bar_outside(obs, bar_col, bar_recirc, ue, ua, we, wa, h, l):
     delta_u2 = (delta_u1_1*l[bar_col])/h[2]
 
     # determine number of columns fully spanned by barrier recirc
-    rec_ncol_bar = recirc_col(recirc = bar_recirc)
+    rec_ncol_bar = recirc_col(recirc = bar_recirc, l_cumu=l_cumu)
     
     if rec_ncol_bar <= 3: 
         # carry on delta u2 until drops down
@@ -2319,13 +2319,13 @@ def bar_inside(obs, bar_col, ue, ua, we, wa, h, l, rec_ncol, rec_nrow):
 
 def bar_outside_check(bar, obs, rec, ue, ua, we, wa, l_cumu, h, l):
     if bar == l_cumu[1]:
-        bar_outside(obs=obs, bar_col=1, bar_recirc=rec, ue=ue, ua=ua, we=we, wa=wa, h=h, l=l)
+        bar_outside(obs=obs, bar_col=1, bar_recirc=rec, ue=ue, ua=ua, we=we, wa=wa, h=h, l=l, l_cumu=l_cumu)
     if bar == l_cumu[2]:
-        bar_outside(obs=obs, bar_col=2, bar_recirc=rec, ue=ue, ua=ua, we=we, wa=wa, h=h, l=l)
+        bar_outside(obs=obs, bar_col=2, bar_recirc=rec, ue=ue, ua=ua, we=we, wa=wa, h=h, l=l, l_cumu=l_cumu)
     if bar == l_cumu[3]:
-        bar_outside(obs=obs, bar_col=3, bar_recirc=rec, ue=ue, ua=ua, we=we, wa=wa, h=h, l=l)
+        bar_outside(obs=obs, bar_col=3, bar_recirc=rec, ue=ue, ua=ua, we=we, wa=wa, h=h, l=l, l_cumu=l_cumu)
     if bar == l_cumu[4]:
-        bar_outside(obs=obs, bar_col=4, bar_recirc=rec, ue=ue, ua=ua, we=we, wa=wa, h=h, l=l)
+        bar_outside(obs=obs, bar_col=4, bar_recirc=rec, ue=ue, ua=ua, we=we, wa=wa, h=h, l=l, l_cumu=l_cumu)
         
     return
 
