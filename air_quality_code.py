@@ -1396,9 +1396,13 @@ def column_dimensioning(rec, zone, check, bar, row):
                 l[4] = zone[3] - l[1] - l[2] - l[3]
         else:
             if check[3] == 1:
-                if bar[3] <= rec[0]:
+                if bar[3] < rec[0]:
                     l[2] = bar[3] - l[1]
                     l[3] = rec[0] - l[1] - l[2]
+                    l[4] = zone[3] - l[1] - l[2] - l[3]
+                elif bar[3] == rec[0]:
+                    l[2] = zone[2] - l[1]
+                    l[3] = bar[3] - l[1] - l[2]
                     l[4] = zone[3] - l[1] - l[2] - l[3]
                 else:
                     if rec[4] >= zone[4]:
