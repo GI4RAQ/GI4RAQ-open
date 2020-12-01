@@ -2088,11 +2088,8 @@ def no_barriers_pattern(row, h_cumu, rec_ncol, wa1, we1, ua1, ue1, U1, U2, U3, U
     
     
     # decrease dispersion at edge of recirc
-    dis = 0.001*Ut
-    # above based on Ur being 10% of Uh, and dispersion within recirc will be
-    # 10% of that again, so dispersion at boundary needs to be an order of 
-    # magnitude smaller again
-    
+    dis = 0.01*Uh
+
     if rec_ncol > 0 and rec_ncol < 5:
         if row[0] == h_cumu[2]:
             ue1[1,(rec_ncol+1)] = dis
@@ -2168,6 +2165,7 @@ wa1_mir = no_barriers_mir[3]
 def bar_outside(obs, bar_col, bar_recirc, ue, ua, we, wa, h, l, l_cumu):
     # dispersion at barrier: reduce dispersion that it currently is by barrier effect
     # ue1[1,(bar_col+1)] = (1-obs)*ue1[1,(bar_col+1)]
+    # this is now altered based on 10% of the slowed advection term (U1) below
     
     # calculate change in U1 (i.e. the amount slowed down)
     # altered this so it doesn't refer back to the constant of U1 but instead
@@ -2275,7 +2273,7 @@ def bar_inside(obs, bar_col, ue, ua, we, wa, h, l, rec_ncol, rec_nrow):
         #we1[2,1:(rec_ncol+1)] = ((abs(wa1[2,1])+abs(wa1[2,rec_ncol]))/2)*0.1
     
         # additional dispersion reduction at site of barrier
-        #ue[1,bar_col+1] = (1-obs)*ue[1,bar_col+1]
+        ue[1,bar_col+1] = (1-obs)*ue[1,bar_col+1]
 
         
     elif rec_nrow == 3:
@@ -2314,7 +2312,7 @@ def bar_inside(obs, bar_col, ue, ua, we, wa, h, l, rec_ncol, rec_nrow):
         we[3,1] = abs(wa[3,1])*0.1
     
         # additional dispersion reduction at site of barrier
-        #ue[1,bar_col+1] = (1-obs)*ue[1,bar_col+1]
+        ue[1,bar_col+1] = (1-obs)*ue[1,bar_col+1]
     
     return
 
@@ -2389,8 +2387,8 @@ def existing_barrier_pattern(check, l_cumu, rec_ncol, rec_nrow, bar, obs, rec, u
             
     # 2. INSIDE RECIRC
     # for the inside recirc adjustments, if there are 2 existing barriers within
-            # the recirc, take the largest to account for advection changes, but
-            # include the effect on dispersion from the smaller barrier
+            # the recirc, take the largest to account for advection changes (& disp included), 
+            # but include the effect on dispersion from the smaller barrier
     
     # if there's only one existing barrier present and this is upwind
     if check[0] == 1 and check[2] == 0:
@@ -2410,7 +2408,7 @@ def existing_barrier_pattern(check, l_cumu, rec_ncol, rec_nrow, bar, obs, rec, u
         if l_cumu[rec_ncol] > bar[0] and l_cumu[rec_ncol] > bar[2]:
             # if existing upwind is largest:
             if row[8] > row[9]:
-                # decrease advection based on upwind existing
+                # decrease advection (& disp included) based on upwind existing
                 bar_inside_check(bar=bar[0], obs=obs[0], ue=ue2, ua=ua2, we=we2, wa=wa2, h=h, l=l, rec_ncol=rec_ncol, rec_nrow=rec_nrow, l_cumu=l_cumu)
                 
                 # decrease dispersion based on downwind existing
@@ -2419,7 +2417,7 @@ def existing_barrier_pattern(check, l_cumu, rec_ncol, rec_nrow, bar, obs, rec, u
                 
             # if existing downwind is largest:
             if row[9] >= row[8]:
-                # decrease advection based on downwind existing
+                # decrease advection (& disp included) based on downwind existing
                 bar_inside_check(bar=bar[2], obs=obs[2], ue=ue2, ua=ua2, we=we2, wa=wa2, h=h, l=l, rec_ncol=rec_ncol, rec_nrow=rec_nrow, l_cumu=l_cumu)
                     
                 # decrease dispersion based on upwind existing
@@ -2539,7 +2537,7 @@ def new_barrier_pattern(check, l_cumu, bar, obs, rec, ue3, ua3, we3, wa3, h, l, 
     if l_cumu[rec_ncol] > zone[3]:
         # if all barriers are the same height
         if max(row[2:6]) == row[8] and row[8] == row[9]:
-            # apply advection changes based on GI
+            # apply advection changes (disp included) based on GI
             # if the barrier is upwind
             if check[1] == 1:
                 # apply advection changes based on new barrier upwind
@@ -2551,7 +2549,7 @@ def new_barrier_pattern(check, l_cumu, bar, obs, rec, ue3, ua3, we3, wa3, h, l, 
                 
             # else if the new barrier is downwind
             elif check[3] == 1:
-                # apply advection changes based on new barrier downwind
+                # apply advection changes (disp included) based on new barrier downwind
                 bar_inside_check(bar=bar[3], obs=obs[3], ue=ue3, ua=ua3, we=we3, wa=wa3, l_cumu=l_cumu, h=h, l=l, rec_ncol=rec_ncol, rec_nrow=rec_nrow)
                 
                 # apply dispersion to the existing barriers
@@ -2658,7 +2656,7 @@ def new_barrier_pattern(check, l_cumu, bar, obs, rec, ue3, ua3, we3, wa3, h, l, 
                 bar_inside_disp(bar=bar[0], ue=ue3, obs=obs[0], l_cumu=l_cumu)
     
     
-    # 2c) if the recirc covers the upwind existing and new GI placed upwind, 
+    # 2c) if the recirc covers the upwind existing and new GI placed UPWIND, 
                     # (recirc doesn't cover downwind existing)
     if l_cumu[rec_ncol] > bar[1] and l_cumu[rec_ncol] <= zone[3]:
         if check[1] == 1:
