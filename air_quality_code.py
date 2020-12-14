@@ -2249,15 +2249,24 @@ def bar_outside(obs, bar_col, bar_recirc, ue, ua, we, wa, h, l, l_cumu):
 def bar_inside(obs, bar_col, ue, ua, we, wa, h, l, rec_ncol, rec_nrow):
     # calculate horizontal change in row 1 - if there is a recirculation flow
     # there will always be a value for U12
-    delta_ur_11 = obs*abs(ua[1,2])
+    #delta_ur_11 = obs*abs(ua[1,2])
     # calculate vertial change near going up
-    delta_ur_111 = (delta_ur_11*h[1])/l[1]
+    #delta_ur_111 = (delta_ur_11*h[1])/l[1]
     # calculate vertical change going down
-    delta_ur_1 = (delta_ur_11*h[1])/l[rec_ncol]
+    #delta_ur_1 = (delta_ur_11*h[1])/l[rec_ncol]
+    
+    # no change in Ur to simulate no slowing of Ur due to barrier
+    delta_ur_1 = 0
+    delta_ur_11 = 0
+    delta_ur_111 = 0
 
     # calculate horizontal change in top row (could be either row 2 or 3)
-    delta_ur_2 = (delta_ur_111*l[1])/h[2]
-    delta_ur_3 = (delta_ur_111*l[1])/h[3]
+    #delta_ur_2 = (delta_ur_111*l[1])/h[2]
+    #delta_ur_3 = (delta_ur_111*l[1])/h[3]
+    
+    delta_ur_2 = 0
+    delta_ur_3 = 0
+    
 
     # flows within recirc region
     if rec_nrow == 2:
