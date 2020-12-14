@@ -333,6 +333,7 @@ for index in range(len(objects)):
             if objects[index][key] != []:
                 gi_zone = objects[index]["name"]
 #print(gi_zone)
+gi_zone_w = next((item.get('width') for item in objects if item["name"]==gi_zone), 0)
 
 # determine exactly where the GI barrier is (m from left to middle of barrier)
 gi_loc = 0  # initialising value
@@ -354,6 +355,11 @@ for item in objects:
 # extract distance from lhs of zone to middle of barrier
 gi_loc2 = next((item.get('where_in_zone') for item in gi), 0)
 #print(gi_loc2)
+
+if gi_loc2 == 0:
+    gi_loc2 = gi_loc2 + 0.1
+elif gi_loc2 == gi_zone_w:
+    gi_loc2 = gi_loc2 - 0.1
 
 # combine location of zone and location of object within the zone to get
 # the location of the barrier in meters from left edge of street
@@ -1123,7 +1129,7 @@ def column_dimensioning(rec, zone, check, bar, row):
         else:
             l[5] = zone[4] - l[1] - l[2] - l[3] - l[4]
                     
-    elif rec[0] > zone[0] and rec[0] < zone[1]:
+    elif rec[0] >= zone[0] and rec[0] < zone[1]:
         # CASE 2
         # upwind: yes, no
         if check[0] == 1 and row[8] < row[0]:
@@ -1239,7 +1245,7 @@ def column_dimensioning(rec, zone, check, bar, row):
         else:
             l[5] = zone[4] - l[1] - l[2] - l[3] - l[4]
         
-    elif rec[0] > zone[1] and rec[0] < zone[2]:
+    elif rec[0] >= zone[1] and rec[0] < zone[2]:
         # CASE 3
         # upwind (no)
         if check[0] == 0:
@@ -1362,8 +1368,11 @@ def column_dimensioning(rec, zone, check, bar, row):
         else:
             l[5] = zone[4] - l[1] - l[2] - l[3] - l[4]
             
-    elif rec[0] > zone[2] and rec[0] < zone[3]:
+    elif rec[0] >= zone[2] and rec[0] < zone[3]:
         # CASE 4
+        if rec[0] == zone[2]:
+            rec[0] = rec[0] - 0.1
+        
         # upwind (yes yes)
         if check[0] == 1 and row[8] > row[0]:
                 error[4,1] = 1
@@ -1427,8 +1436,11 @@ def column_dimensioning(rec, zone, check, bar, row):
         # and finally..
         l[5] = zone[4] - l[1] - l[2] - l[3] - l[4]
     
-    elif rec[0] > zone[3] and rec[0] < zone[4]:
+    elif rec[0] >= zone[3] and rec[0] < zone[4]:
         # CASE 5
+        if rec[0] == zone[3]:
+            rec[0] = rec[0]+0.1
+        
         if check[0] == 1:
             if row[8] > row[0]:
                 error[5,1] = 1
