@@ -171,8 +171,8 @@ elif street_dir_chr == "NNW":
 # select the station data based on the above:
 root = "https://raw.githubusercontent.com/pearce-helen/GI4RAQ-open/master/meteorology/"
 # combine the root and the station info into correct URL
-#url_station = (f"{root}station{station_id}.csv")
 url_station = root + "station" + str(station_id) + ".csv"
+
 # visual inspection
 #print(url_station)
 
@@ -296,6 +296,10 @@ ubg_mir = RL_u
 # frequency of wind condition occurence (i.e. how often the wind is blowing L->R)
 LR_freq = LR_freq
 RL_freq = RL_freq
+
+# therefore the parallel cases are half the remainder
+# still referred to as LR/RL as the model will run dispersion only but based
+# on the (potentially) different dimensioning
 LR_par_freq = (1-LR_freq-RL_freq)/2
 RL_par_freq = (1-LR_freq-RL_freq)/2
 
@@ -340,7 +344,7 @@ gi_zone_w = next((item.get('width') for item in objects if item["name"]==gi_zone
 gi_loc = 0  # initialising value
 a = 0     # just a counter
 
-# firstly determine distance from left edge of street to the zone in which the
+# Determine distance from left edge of STREET to the zone in which the
 # GI is located 
 for item in objects:
     if item["name"] == gi_zone:
@@ -353,7 +357,9 @@ for item in objects:
 
 #print(gi_loc)
 
-# extract distance from lhs of zone to middle of barrier
+
+# RFI: Barrier positioning quick fix
+# extract distance from lhs of ZONE to middle of barrier
 gi_loc2 = float(next((item.get('where_in_zone') for item in gi), 0))
 #print(gi_loc2)
 gi_zone_w = float(gi_zone_w)
@@ -640,6 +646,8 @@ else:
 rec_original = np.array([0,0,0,0,0], dtype = float)
 recirc = 0
 
+
+# RFI: default 0.1 recirc zone if 3H-3=0
 # upwind building recirc
 # if there is building upwind the recirculation is calculated by 3H-3
 # however if this is less than or equal to 0, 0.01 is assigned
@@ -943,6 +951,9 @@ bar_mirror = rounding_4(data=bar_mirror)
 # ROW DIMENSIONING
 ###############################################################################
 # NOTE: ignore 0 index to avoid confusion with row 1, row 2, row 3
+
+# RFI: only currently allow GI to be smaller than both buildings, and there
+# must be buildings on each side
 
 def row_dimensioning(row):
     # h = a storage container
@@ -1372,6 +1383,9 @@ def column_dimensioning(rec, zone, check, bar, row):
             
     elif rec[0] >= zone[2] and rec[0] < zone[3]:
         # CASE 4
+        
+        # RFI: quick fix to shorten recirc if == downwind SB
+        # this can lead to some very 'skinny' columns
         if rec[0] == zone[2]:
             rec[0] = rec[0] - 0.1
         
@@ -1434,7 +1448,7 @@ def column_dimensioning(rec, zone, check, bar, row):
                     l[3] = rec[0] - l[1] - l[2]
                     l[4] = zone[3] - l[1] - l[2] - l[3]
                 
-                
+        # RFI: case 4.4.1 treated separately as quick fix       
         # case 4.4.1
         if check[1] == 1 and max(row[2:6]) < row[0] and check[0] == 1:
             l[1] = zone[0]
@@ -2107,7 +2121,7 @@ def no_barriers_pattern(row, h_cumu, rec_ncol, wa1, we1, ua1, ue1, U1, U2, U3, U
         
     
     
-    
+    # RFI: edge of recirc dispersion adjustment value
     # decrease dispersion at edge of recirc
     dis = 0.01*Uh
 
@@ -2256,6 +2270,9 @@ def bar_outside(obs, bar_col, bar_recirc, ue, ua, we, wa, h, l, l_cumu):
 # 1b) Flow effected by barrier placed within recirculation zone
 
 def bar_inside(obs, bar_col, ue, ua, we, wa, h, l, rec_ncol, rec_nrow):
+    
+    # RFI: whether to slow down recirc flow or how to adjust flow around barrier
+    
     # calculate horizontal change in row 1 - if there is a recirculation flow
     # there will always be a value for U12
     #delta_ur_11 = obs*abs(ua[1,2])
@@ -2983,6 +3000,8 @@ if check_mirror[3] == 1:
 ###############################################################################
 
 def emis_calc(veh_per_hour):
+    # RFI: generic emissions estimate - could look at specifying fleets
+    # e.g. London, urban outside London, rural (same as in NAEI)
     # Generate an emissions value from AADT provided by user
     # units: vehicles per day
     aadt = np.array([0,0,0,0,0], dtype = float)
