@@ -365,9 +365,9 @@ gi_loc2 = float(next((item.get('where_in_zone') for item in gi), 0))
 gi_zone_w = float(gi_zone_w)
 
 if gi_loc2 == 0:
-    gi_loc2 = gi_loc2 + 0.1
+    gi_loc2 = gi_loc2 + 0.01
 elif gi_loc2 == gi_zone_w:
-    gi_loc2 = gi_loc2 - 0.1
+    gi_loc2 = gi_loc2 - 0.01
 
 # combine location of zone and location of object within the zone to get
 # the location of the barrier in meters from left edge of street
@@ -1387,7 +1387,7 @@ def column_dimensioning(rec, zone, check, bar, row):
         # RFI: quick fix to shorten recirc if == downwind SB
         # this can lead to some very 'skinny' columns
         if rec[0] == zone[2]:
-            rec[0] = rec[0] - 0.1
+            rec[0] = rec[0] - 0.01
         
         # upwind (yes yes)
         if check[0] == 1 and row[8] > row[0]:
@@ -1462,7 +1462,7 @@ def column_dimensioning(rec, zone, check, bar, row):
     elif rec[0] >= zone[3] and rec[0] < zone[4]:
         # CASE 5
         if rec[0] == zone[3]:
-            rec[0] = rec[0]+0.1
+            rec[0] = rec[0]+0.01
         
         if check[0] == 1:
             if row[8] > row[0]:
