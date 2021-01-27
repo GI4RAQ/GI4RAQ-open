@@ -85,7 +85,7 @@ cB_pm25 = content["pm2p5_bg_concentration"] # UNIT: ug/m3
 # read in the met station sites from the github repository
 # (to get the path go on the file, click 'raw', and copy the URL)
 
-url = 'https://raw.githubusercontent.com/pearce-helen/GI4RAQ-open/master/meteorology/locations.csv'
+url = 'https://raw.githubusercontent.com/GI4RAQ/GI4RAQ-open/master/meteorology/locations.csv'
 sites_df = pd.read_csv(url)
 
 # visual inspection
