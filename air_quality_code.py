@@ -1,12 +1,35 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Oct 22 15:04:01 2019
-
-@author: HelenPearce
-"""
 ###############################################################################
-# PHASE 3: AUGUST 2020: WIND CLIMATOLOGY WEIGHTING AND PM2.5
+# BETA VERSION 1.0
+###############################################################################
+
+###############################################################################
+# DISCLAIMER
+# This beta air quality code is utilised by the prototype Green Infrastructure
+# for Roadside Air Quality (GI4RAQ) Platform, accessible at www.gi4raq.ac.uk .
+# The aim of this code (and the Platform) is to provide first indications of:
+# the areas within the cross section of a street that may be impacted by the
+# addition of a GI4RAQ barrier; whether these local air quality impacts are likely
+# to be of benefit and/or disbenefit; and where those impacts may be more, or less,
+# pronounced. The estimated changes, and the locations of those changes, are rough
+# estimates, subject to large (unspecified) uncertainties. Our intention is to test
+# and gradually refine the code (and the Platform) to provide estimates of greater
+# accuracy and/or specified uncertainty. However, until notified to the contrary,
+# any and all actions taken by one or more people, with reference to the estimated
+# changes in local air quality provided by this code (and/or the Platform), are
+# taken at their own risk.
+###############################################################################
+
+###############################################################################
+# SUPPORT & CONTACT DETAILS
+# The academic group that has developed this beta code has applied for funding
+# to develop it further, and offer support to users of the prototype GI4RAQ
+# Platform. In the meantime, please accept our apologies for neither offering
+# support nor providing contact details; we currently do not have the resources
+# to do so. You can, however, find a comprehensive introduction to the Platform
+# (including some of the code's current limitations) in its accompanying User
+# Guide (six short videos totally appr. 1hr). To access this, please start by
+# registering for free at www.gi4raq.ac.uk . 
+###############################################################################
 
 ###############################################################################
 # HOUSE-KEEPING
@@ -42,15 +65,12 @@ error = np.zeros((10,10))
 content = json.loads(base64.b64decode(sys.argv[1]).decode('utf8'))
 
 # ___________ static info for testing purposes ___________
-# if using your own generate base64 string, assign as a string to base64_test
-# and then uncomment line 55 (decode the string and store as content)
+# if using your own generated base64 string
+# 1) comment out line 65
+# 2) uncomment line 73 and assign a string to base64_test
+# 3) uncomment line 76 (decode the string and store as content)
 
-
-# BARRIER ON RIGHT (position = 0)
 #base64_test = "eyJpZCI6MzcwLCJwcm9qZWN0c19pZCI6OTcsImF1dGhvcl9pZCI6NDIsImxhdCI6IjUyLjQ2NyIsImxuZyI6Ii0xLjkyOCIsIm5hbWUiOiJUZXN0IHdpdGggSGVsZW4gMDgwMTIwMjEiLCJ0YWciOiJhbmFseXNpcy0xLTEtMSIsIndpbmQiOiJOIiwib2JqZWN0cyI6Ilt7XCJ0eXBlXCI6XCJidWlsZGluZ1wiLFwibmFtZVwiOlwiQkwxXCIsXCJvcmRlclwiOjAsXCJsb2NrZWRcIjp0cnVlLFwiaGVpZ2h0XCI6XCI4LjBcIixcIndpZHRoXCI6MixcInNpZGVcIjpcImxlZnRcIixcIndoZXJlXCI6XCJzdHJlZXR0b2VuZFwifSx7XCJ0eXBlXCI6XCJyZWNlcHRvcl96b25lXCIsXCJuYW1lXCI6XCJSWkJMMVwiLFwib3JkZXJcIjoxLFwibG9ja2VkXCI6dHJ1ZSxcImF0dGFjaGVkVG9CdWlsZGluZ1wiOnRydWUsXCJ3aWR0aFwiOlwiMlwiLFwic2lkZVwiOlwibGVmdFwiLFwid2hlcmVcIjpcInN0cmVldHRvZW5kXCIsXCJleGlzdGluZ19iYXJyaWVyXCI6W119LHtcInR5cGVcIjpcIm1hcmtlclwiLFwibmFtZVwiOlwiU3RyZWV0IEJvdW5kYXJ5IDFcIixcInN1YnR5cGVcIjpcImVkZ2VcIixcIm9yZGVyXCI6MixcImxvY2tlZFwiOnRydWUsXCJzaWRlXCI6XCJsZWZ0XCJ9LHtcInR5cGVcIjpcInJlY2VwdG9yX3pvbmVcIixcIm5hbWVcIjpcIlJaMVwiLFwib3JkZXJcIjoxLFwibG9ja2VkXCI6ZmFsc2UsXCJ3aWR0aFwiOlwiM1wiLFwic2lkZVwiOlwibGVmdFwiLFwid2hlcmVcIjpcInN0cmVldHRva2VyYlwiLFwiZ2k0cmFxX2JhcnJpZXJcIjpbXX0se1widHlwZVwiOlwibWFya2VyXCIsXCJuYW1lXCI6XCJLZXJiIDFcIixcInN1YnR5cGVcIjpcImtlcmJcIixcIm9yZGVyXCI6MixcImxvY2tlZFwiOmZhbHNlLFwic2lkZVwiOlwibGVmdFwifSx7XCJ0eXBlXCI6XCJlbWlzc2lvbnNfem9uZVwiLFwibmFtZVwiOlwiRVoxXCIsXCJvcmRlclwiOjMsXCJsb2NrZWRcIjpmYWxzZSxcIndpZHRoXCI6XCIxNlwiLFwiY3VycmVudF9leHBvc3VyZV9ubzJcIjpudWxsLFwiY3VycmVudF9leHBvc3VyZV9QTTJfNVwiOm51bGwsXCJ0cmFmZmljXCI6XCI2MDBcIixcInNpZGVcIjpcInJpZ2h0XCIsXCJoYXNFbWlzc2lvbnNcIjpmYWxzZSxcIndoZXJlXCI6XCJrZXJidG9rZXJiXCIsXCJOTzJcIjpudWxsLFwiUE0yNVwiOm51bGwsXCJ2bW92ZW1lbnRcIjpcIjYwMFwiLFwiY3VycmVudF9lbWlzc2lvbnNfUE0yXzVcIjpudWxsLFwiY3VycmVudF9lbWlzc2lvbnNfbm8yXCI6bnVsbH0se1widHlwZVwiOlwibWFya2VyXCIsXCJuYW1lXCI6XCJLZXJiIDJcIixcInN1YnR5cGVcIjpcImtlcmJcIixcIm9yZGVyXCI6MixcImxvY2tlZFwiOmZhbHNlLFwic2lkZVwiOlwicmlnaHRcIn0se1widHlwZVwiOlwicmVjZXB0b3Jfem9uZVwiLFwibmFtZVwiOlwiUloyXCIsXCJvcmRlclwiOjEsXCJsb2NrZWRcIjpmYWxzZSxcIndpZHRoXCI6XCI1XCIsXCJzaWRlXCI6XCJyaWdodFwiLFwid2hlcmVcIjpcInN0cmVldHRva2VyYlwiLFwiZ2k0cmFxX2JhcnJpZXJcIjpbe1wibmFtZVwiOlwiSGVkZ2VcIixcInR5cGVcIjpcImdyZWVuLWJhcnJpZXJcIixcIndoZXJlX2luX3pvbmVcIjpcIjBcIixcImhlaWdodFwiOlwiMlwiLFwid2lkdGhcIjpcIjFcIixcIm9ic3RcIjpcIjc1XCIsXCJzZWFzXCI6bnVsbCxcInNlYXNvbmFsaXR5XCI6XCJldmVyZ2VlblwiLFwiYWFwXCI6bnVsbCxcImFhbVwiOm51bGwsXCJlbGlmZVwiOm51bGwsXCJ0YWFwXCI6bnVsbCxcInRjdGhcIjpudWxsLFwidGNiaFwiOm51bGwsXCJ0Y3dcIjpudWxsLFwidGFhbVwiOm51bGwsXCJ0Zm9ybVwiOm51bGwsXCJ0c2Vhc1wiOm51bGwsXCJ0c3BlY2llc1wiOm51bGwsXCJ0ZWxpZmVcIjpudWxsLFwidHNwXCI6bnVsbCxcInRvYnN0XCI6bnVsbCxcIm9yZGVyXCI6MH1dfSx7XCJ0eXBlXCI6XCJtYXJrZXJcIixcIm5hbWVcIjpcIlN0cmVldCBCb3VuZGFyeSAyXCIsXCJzdWJ0eXBlXCI6XCJlZGdlXCIsXCJvcmRlclwiOjQsXCJsb2NrZWRcIjp0cnVlLFwic2lkZVwiOlwicmlnaHRcIn0se1widHlwZVwiOlwicmVjZXB0b3Jfem9uZVwiLFwibmFtZVwiOlwiUlpCTDJcIixcIm9yZGVyXCI6NSxcImxvY2tlZFwiOnRydWUsXCJhdHRhY2hlZFRvQnVpbGRpbmdcIjp0cnVlLFwid2lkdGhcIjpcIjFcIixcInNpZGVcIjpcInJpZ2h0XCIsXCJ3aGVyZVwiOlwic3RyZWV0dG9lbmRcIixcImV4aXN0aW5nX2JhcnJpZXJcIjpbXX0se1widHlwZVwiOlwiYnVpbGRpbmdcIixcIm5hbWVcIjpcIkJMMlwiLFwib3JkZXJcIjo2LFwibG9ja2VkXCI6dHJ1ZSxcImhlaWdodFwiOlwiMTAuMFwiLFwid2lkdGhcIjoyLFwic2lkZVwiOlwicmlnaHRcIixcIndoZXJlXCI6XCJzdHJlZXR0b2VuZFwifV0iLCJsb2NrZWQiOm51bGwsIlBNMjUiOjExLCJOTzIiOjE1LCJjcmVhdGVkX2F0IjoiMjAyMS0wMS0wOCAxMzo1MDo1MiIsInVwZGF0ZWRfYXQiOiIyMDIxLTAxLTExIDExOjU5OjU4IiwiZGVsZXRlZF9hdCI6bnVsbCwibm8yX2JnX2NvbmNlbnRyYXRpb24iOjE1LCJwbTJwNV9iZ19jb25jZW50cmF0aW9uIjoxMSwicHJvamVjdCI6eyJpZCI6OTcsImF1dGhvcl9pZCI6NDIsIm5hbWUiOiJUb3duLCBSb2FkIChuciBKdW5jdGlvbikiLCJ0YWciOiJ0b3duLXJvYWQtbnItanVuY3Rpb24iLCJjcmVhdGVkX2F0IjoiMjAyMC0xMC0yNyAxMjoyMDozNyIsInVwZGF0ZWRfYXQiOiIyMDIwLTEwLTI3IDEyOjIwOjM3IiwiZGVsZXRlZF9hdCI6bnVsbH19=="
-
-# BARRIER ON LEFT (position = 3)
-#base64_test = "eyJpZCI6MzcwLCJwcm9qZWN0c19pZCI6OTcsImF1dGhvcl9pZCI6NDIsImxhdCI6IjUyLjQ2NyIsImxuZyI6Ii0xLjkyOCIsIm5hbWUiOiJUZXN0IHdpdGggSGVsZW4gMDgwMTIwMjEiLCJ0YWciOiJhbmFseXNpcy0xLTEtMSIsIndpbmQiOiJOIiwib2JqZWN0cyI6Ilt7XCJ0eXBlXCI6XCJidWlsZGluZ1wiLFwibmFtZVwiOlwiQkwxXCIsXCJvcmRlclwiOjAsXCJsb2NrZWRcIjp0cnVlLFwiaGVpZ2h0XCI6XCI4LjBcIixcIndpZHRoXCI6MixcInNpZGVcIjpcImxlZnRcIixcIndoZXJlXCI6XCJzdHJlZXR0b2VuZFwifSx7XCJ0eXBlXCI6XCJyZWNlcHRvcl96b25lXCIsXCJuYW1lXCI6XCJSWkJMMVwiLFwib3JkZXJcIjoxLFwibG9ja2VkXCI6dHJ1ZSxcImF0dGFjaGVkVG9CdWlsZGluZ1wiOnRydWUsXCJ3aWR0aFwiOlwiMlwiLFwic2lkZVwiOlwibGVmdFwiLFwid2hlcmVcIjpcInN0cmVldHRvZW5kXCIsXCJleGlzdGluZ19iYXJyaWVyXCI6W119LHtcInR5cGVcIjpcIm1hcmtlclwiLFwibmFtZVwiOlwiU3RyZWV0IEJvdW5kYXJ5IDFcIixcInN1YnR5cGVcIjpcImVkZ2VcIixcIm9yZGVyXCI6MixcImxvY2tlZFwiOnRydWUsXCJzaWRlXCI6XCJsZWZ0XCJ9LHtcInR5cGVcIjpcInJlY2VwdG9yX3pvbmVcIixcIm5hbWVcIjpcIlJaMVwiLFwib3JkZXJcIjoxLFwibG9ja2VkXCI6ZmFsc2UsXCJ3aWR0aFwiOlwiM1wiLFwic2lkZVwiOlwibGVmdFwiLFwid2hlcmVcIjpcInN0cmVldHRva2VyYlwiLFwiZ2k0cmFxX2JhcnJpZXJcIjpbe1wibmFtZVwiOlwiSGVkZ2VcIixcInR5cGVcIjpcImdyZWVuLWJhcnJpZXJcIixcIndoZXJlX2luX3pvbmVcIjpcIjMuMFwiLFwiaGVpZ2h0XCI6XCIyLjBcIixcIndpZHRoXCI6XCIxLjBcIixcIm9ic3RcIjpcIjc1XCIsXCJzZWFzXCI6bnVsbCxcInNlYXNvbmFsaXR5XCI6XCJldmVyZ2VlblwiLFwiYWFwXCI6bnVsbCxcImFhbVwiOm51bGwsXCJlbGlmZVwiOm51bGwsXCJ0YWFwXCI6bnVsbCxcInRjdGhcIjpudWxsLFwidGNiaFwiOm51bGwsXCJ0Y3dcIjpudWxsLFwidGFhbVwiOm51bGwsXCJ0Zm9ybVwiOm51bGwsXCJ0c2Vhc1wiOm51bGwsXCJ0c3BlY2llc1wiOm51bGwsXCJ0ZWxpZmVcIjpudWxsLFwidHNwXCI6bnVsbCxcInRvYnN0XCI6bnVsbCxcIm9yZGVyXCI6MH1dfSx7XCJ0eXBlXCI6XCJtYXJrZXJcIixcIm5hbWVcIjpcIktlcmIgMVwiLFwic3VidHlwZVwiOlwia2VyYlwiLFwib3JkZXJcIjoyLFwibG9ja2VkXCI6ZmFsc2UsXCJzaWRlXCI6XCJsZWZ0XCJ9LHtcInR5cGVcIjpcImVtaXNzaW9uc196b25lXCIsXCJuYW1lXCI6XCJFWjFcIixcIm9yZGVyXCI6MyxcImxvY2tlZFwiOmZhbHNlLFwid2lkdGhcIjpcIjE2XCIsXCJjdXJyZW50X2V4cG9zdXJlX25vMlwiOm51bGwsXCJjdXJyZW50X2V4cG9zdXJlX1BNMl81XCI6bnVsbCxcInRyYWZmaWNcIjpcIjYwMFwiLFwic2lkZVwiOlwicmlnaHRcIixcImhhc0VtaXNzaW9uc1wiOmZhbHNlLFwid2hlcmVcIjpcImtlcmJ0b2tlcmJcIixcIk5PMlwiOm51bGwsXCJQTTI1XCI6bnVsbCxcInZtb3ZlbWVudFwiOlwiNjAwXCIsXCJjdXJyZW50X2VtaXNzaW9uc19QTTJfNVwiOm51bGwsXCJjdXJyZW50X2VtaXNzaW9uc19ubzJcIjpudWxsfSx7XCJ0eXBlXCI6XCJtYXJrZXJcIixcIm5hbWVcIjpcIktlcmIgMlwiLFwic3VidHlwZVwiOlwia2VyYlwiLFwib3JkZXJcIjoyLFwibG9ja2VkXCI6ZmFsc2UsXCJzaWRlXCI6XCJyaWdodFwifSx7XCJ0eXBlXCI6XCJyZWNlcHRvcl96b25lXCIsXCJuYW1lXCI6XCJSWjJcIixcIm9yZGVyXCI6MSxcImxvY2tlZFwiOmZhbHNlLFwid2lkdGhcIjpcIjVcIixcInNpZGVcIjpcInJpZ2h0XCIsXCJ3aGVyZVwiOlwic3RyZWV0dG9rZXJiXCIsXCJnaTRyYXFfYmFycmllclwiOltdfSx7XCJ0eXBlXCI6XCJtYXJrZXJcIixcIm5hbWVcIjpcIlN0cmVldCBCb3VuZGFyeSAyXCIsXCJzdWJ0eXBlXCI6XCJlZGdlXCIsXCJvcmRlclwiOjQsXCJsb2NrZWRcIjp0cnVlLFwic2lkZVwiOlwicmlnaHRcIn0se1widHlwZVwiOlwicmVjZXB0b3Jfem9uZVwiLFwibmFtZVwiOlwiUlpCTDJcIixcIm9yZGVyXCI6NSxcImxvY2tlZFwiOnRydWUsXCJhdHRhY2hlZFRvQnVpbGRpbmdcIjp0cnVlLFwid2lkdGhcIjpcIjFcIixcInNpZGVcIjpcInJpZ2h0XCIsXCJ3aGVyZVwiOlwic3RyZWV0dG9lbmRcIixcImV4aXN0aW5nX2JhcnJpZXJcIjpbXX0se1widHlwZVwiOlwiYnVpbGRpbmdcIixcIm5hbWVcIjpcIkJMMlwiLFwib3JkZXJcIjo2LFwibG9ja2VkXCI6dHJ1ZSxcImhlaWdodFwiOlwiMTAuMFwiLFwid2lkdGhcIjoyLFwic2lkZVwiOlwicmlnaHRcIixcIndoZXJlXCI6XCJzdHJlZXR0b2VuZFwifV0iLCJsb2NrZWQiOm51bGwsIlBNMjUiOjExLCJOTzIiOjE1LCJjcmVhdGVkX2F0IjoiMjAyMS0wMS0wOCAxMzo1MDo1MiIsInVwZGF0ZWRfYXQiOiIyMDIxLTAxLTExIDEyOjExOjQwIiwiZGVsZXRlZF9hdCI6bnVsbCwibm8yX2JnX2NvbmNlbnRyYXRpb24iOjE1LCJwbTJwNV9iZ19jb25jZW50cmF0aW9uIjoxMSwicHJvamVjdCI6eyJpZCI6OTcsImF1dGhvcl9pZCI6NDIsIm5hbWUiOiJUb3duLCBSb2FkIChuciBKdW5jdGlvbikiLCJ0YWciOiJ0b3duLXJvYWQtbnItanVuY3Rpb24iLCJjcmVhdGVkX2F0IjoiMjAyMC0xMC0yNyAxMjoyMDozNyIsInVwZGF0ZWRfYXQiOiIyMDIwLTEwLTI3IDEyOjIwOjM3IiwiZGVsZXRlZF9hdCI6bnVsbH19=="
 
 # decode the base 64 string into JSON format
 #content = json.loads(base64.b64decode(base64_test))
