@@ -1670,7 +1670,7 @@ obs_original[2] = obs_original[2]/100
 
 # upwind new and downwind new done together as there can only be 1
 
-# account for a decrease in blocking ability by a barrier
+# account for a dispropotionate decrease in blocking ability by a barrier
 # if there's a gap between the barrier and tree line
 
 for item in gi:
@@ -1679,17 +1679,11 @@ for item in gi:
         # obstruction of barrier value
         obar = float(item.get("obst"))
         obar = obar/100
-        # adjust obar for seasonality of green barrier: simply halve if deciduous
-        if item["seasonality"] == "deciduous":
-            obar = obar/2
-        # obstruction of tree value (not accounting for spaces between trees along street)
+        #obstruction of tree value
         otree = float(item.get("tobst"))
         otree = otree/100
-        # adjust otree for seasonality of tree crowns: simply halve if deciduous
-        if item["tseas"] == "deciduous":
-            otree = otree/2
-        # obstruction of gap
-        ogap = 0
+        # obstruction of gap assumed to be 0.1
+        ogap = 0.1
         
         # heights
         # total barrier height
@@ -1700,22 +1694,9 @@ for item in gi:
         hgap = float(item.get("tcbh"))-float(item.get("height"))
         # just hedge height
         hbar = float(item.get("height"))
-
-        # having got heights, modify otree to reflect spaces between trees along street
-        # first get tree crown width, twidth, and tree spacing at planting, tspace
-        twidth = float(item.get("tcw"))
-        tspace = float(item.get("tsp"))
-        # calculate modification factor, tfact (assuming tree crowns are oval and tspace ≥ twidth/2)
-        tfact = ((math.pi * twidth)/(4 * tspace))
-        # multiply otree by tfact and ensure 0 ≤ otree ≤ 0.99
-        otree = otree*tfact
-        if otree < 0:
-            otree = 0
-        elif otree > 0.99:
-            otree = 0.99
         
-        # work out gi obstruction based on obar, ogap and otree
-        ototal = ((obar*hbar)+(ogap*hgap)+(otree*htree))/htotal
+        # work out gi obstruction based on disproportionate influence of gap
+        ototal = (((1/obar)*(hbar/htotal))+((1/ogap)*(hgap/htotal))+((1/otree)*(htree/htotal)))**-1
         gi_obs = round(ototal, 2)
     
     # if it's a fence/wall + trees use same methodology as above: 
@@ -1723,14 +1704,11 @@ for item in gi:
         # obstruction of barrier value
         obar = float(item.get("obst"))
         obar = obar/100
-        # obstruction of tree value (not accounting for spaces between trees along street)
+        #obstruction of tree value
         otree = float(item.get("tobst"))
         otree = otree/100
-        # adjust otree for seasonality of tree crowns: simply halve if deciduous
-        if item["tseas"] == "deciduous":
-            otree = otree/2
-        # obstruction of gap
-        ogap = 0
+        # obstruction of gap assumed to be 0.1
+        ogap = 0.1
         
         # heights
         # total barrier height
@@ -1741,41 +1719,14 @@ for item in gi:
         hgap = float(item.get("tcbh"))-float(item.get("height"))
         # just fence/wall height
         hbar = float(item.get("height"))
-
-        # having got heights, modify otree to reflect spaces between trees along street
-        # first get tree crown width, twidth, and tree spacing at planting, tspace
-        twidth = float(item.get("tcw"))
-        tspace = float(item.get("tsp"))
-        # calculate modification factor, tfact (assuming tree crowns are oval and tspace ≥ twidth/2)
-        tfact = ((math.pi * twidth)/(4 * tspace))
-        # multiply otree by tfact and ensure 0 ≤ otree ≤ 0.99
-        otree = otree*tfact
-        if otree < 0:
-            otree = 0
-        elif otree > 0.99:
-            otree = 0.99
         
-        # work out gi obstruction based on obar, ogap and otree
-        ototal = ((obar*hbar)+(ogap*hgap)+(otree*htree))/htotal
+        # work out gi obstruction based on disproportionate influence of gap
+        ototal = (((1/obar)*(hbar/htotal))+((1/ogap)*(hgap/htotal))+((1/otree)*(htree/htotal)))**-1
         gi_obs = round(ototal, 2)
     
-    # if it's just a hedge (with no trees)
-    elif item["type"] == "green-barrier":
-        # obstruction of barrier value
-        obar = float(item.get("obst"))
-        obar = obar/100
-        # adjust obar for seasonality of green barrier: simply halve if deciduous
-        if item["seasonality"] == "deciduous":
-            obar = obar/2        
-        gi_obs = round(obar, 2)
-    
-    # if it's just a fence/wall (with no trees)
-    elif item["type"] == "grey-barrier":    
-        # obstruction of barrier value
-        obar = float(item.get("obst"))
-        obar = obar/100
-        gi_obs = round(obar, 2)
-
+    # if it's just a barrier and no trees:
+    else:
+        gi_obs = float(item.get("obst"))/100
 
         
 # assign to the correct location (upwind or downwind)
