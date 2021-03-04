@@ -1918,7 +1918,9 @@ w = roadw
 def ws_point(ubg,z,H,w):
     
     # firstly determine value of d based on street dimensions
-    if w > (3*H) and w <= (5*H):
+    if w <= (3*H):
+        d = (0.7*H)
+    elif w > (3*H) and w <= (5*H):
         d = (1.75*H)-(0.35*w)
     else:
         d = 0
@@ -1967,14 +1969,14 @@ U3_orig = ws_average(row_min = h_cumu_original[2], row_max = h_cumu_original[3],
 U2_orig = ws_average(row_min = h_cumu_original[1], row_max = h_cumu_original[2], ubg = ubg_orig, H = H_orig)
 U1_orig = ws_average(row_min = 0, row_max = h_cumu_original[1], ubg = ubg_orig, H = H_orig)
 Uh_orig = ws_point(ubg = ubg_orig, z = H_orig, H = H_orig, w = w)
-Ur_orig = (0.1*Uh_orig)
+Ur_orig = (0.1*Uh_orig)*(H_orig/(2*h_original[rec_nrow_orig]))
 Ut_orig = ws_point(ubg = ubg_orig,z=max(row_original[0],row_original[1]),H = H_orig, w = w)
 
 U3_mir = ws_average(row_min = h_cumu_mirror[2], row_max = h_cumu_mirror[3], ubg = ubg_mir, H = H_mir)
 U2_mir = ws_average(row_min = h_cumu_mirror[1], row_max = h_cumu_mirror[2], ubg = ubg_mir, H = H_mir)
 U1_mir = ws_average(row_min = 0, row_max = h_cumu_mirror[1], ubg = ubg_mir, H = H_mir)
 Uh_mir = ws_point(ubg = ubg_mir, z = H_mir, H = H_mir, w = w)
-Ur_mir = (0.1*Uh_mir)
+Ur_mir = (0.1*Uh_mir)*(H_mir/(2*h_mirror[rec_nrow_mir]))
 Ut_mir = ws_point(ubg = ubg_mir,z=max(row_mirror[0],row_mirror[1]),H = H_mir, w = w)
 
 #print(Ut_orig, Uh_orig, Ur_orig, U3_orig, U2_orig, U1_orig)
