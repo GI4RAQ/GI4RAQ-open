@@ -209,10 +209,13 @@ wind = pd.read_csv(url_station)
 # Also remember .copy() if making a new dataframe - ensures not just 'viewing'
 # a dataframe but actually making alterations
 
-# remove wind direction = 0 as per the PPT 0 should always be treated as parallel
-# we can drop this here as we'll only ever work out the L-R occurence and R-L occurence directly,
-# paralled occurrence will then be the remainder
-wind = wind[wind.wind_direction != 0].copy()
+#print(wind)
+# REPLACE slack wind speed with 0.5 m/s and assign the same direction as the street
+# so this is representative of total along-street component
+slack = wind['wind_speed'][0]
+wind['wind_speed'] = wind['wind_speed'].replace([slack],0.5)
+wind['wind_direction'] = wind['wind_direction'].replace([0],street_dir)
+#print(wind)
 
 # firstly, create a new column in the wind dataframe that contains modified angles as if 
 # the street was pointing northerly (i.e. at 0 degrees)
@@ -231,22 +234,41 @@ def rotate_street(wind_d):
         return angle
 
 wind['street_dir_as_N'] = wind.apply(lambda wind: rotate_street(wind['wind_direction']), axis=1)
+#print(wind)
 
 # secondly, calculate theta: the difference between the perpendicular angle 
 # (relative to the street) and the relative wind directions for both the L-R and R-L cases
 # relative perpendicular wind at 270 degrees for L-R, and 90 degrees for R-L
 def dif_to_perp(perp,wind_d):
-    return abs(perp-wind_d)
+    if perp == 360:
+        if wind_d < 180:
+            a = 0+wind_d
+        else:
+            a=360-wind_d
+        
+        return a
+        
+    else:
+        return abs(perp-wind_d)
 
 wind['LR_difference'] = wind.apply(lambda wind: dif_to_perp(270, wind['street_dir_as_N']), axis=1)
+#print(wind)
 wind['RL_difference'] = wind.apply(lambda wind: dif_to_perp(90, wind['street_dir_as_N']), axis=1)
-
+#print(wind)
+wind['par1_difference'] = wind.apply(lambda wind: dif_to_perp(360, wind['street_dir_as_N']), axis=1)
+#print(wind)
+wind['par2_difference'] = wind.apply(lambda wind: dif_to_perp(180, wind['street_dir_as_N']), axis=1)
+#print(wind)
 
 # create subsets that only include data that is relevant for each sector 
 # i.e. 45 +/- from the perpendicular
 LR_only = wind.loc[wind.LR_difference <= 45].copy()
 RL_only = wind.loc[wind.RL_difference <= 45].copy()
+par1_only = wind.loc[wind.par1_difference <= 45].copy()
+par2_only = wind.loc[wind.par2_difference <= 45].copy()
 
+#print(LR_only)
+#print(RL_only)
 
 # convert theta into radians as this is what math.cos assumes
 def calculate_radians(degrees):
@@ -254,7 +276,13 @@ def calculate_radians(degrees):
 
 LR_only["LR_dif_rad"] = LR_only.apply(lambda LR_only: calculate_radians(LR_only['LR_difference']), axis=1)
 RL_only["RL_dif_rad"] = RL_only.apply(lambda RL_only: calculate_radians(RL_only['RL_difference']), axis=1)
+par1_only["par_dif_rad"] = par1_only.apply(lambda par1_only: calculate_radians(par1_only['par1_difference']), axis=1)
+par2_only["par_dif_rad"] = par2_only.apply(lambda par2_only: calculate_radians(par2_only['par2_difference']), axis=1)
 
+# print(LR_only)
+# print(RL_only)
+# print(par1_only)
+# print(par2_only)
 
 # calculate the perpendicular component (across canyon) of each of the wind vectors
 
@@ -266,12 +294,16 @@ RL_only["RL_dif_rad"] = RL_only.apply(lambda RL_only: calculate_radians(RL_only[
 # the acute angle has been calculated (theta - relative to the perpendicular)
 # and the adjacent side of the right-angled triangle represents the cross-street
 # component of the wind vector
+
+# for the along street speeds, cosine is still used because the adjacent component is now
+# orientated parallel to the street (i.e. the reference angle has changed through 90)
 def calculate_u(theta, wind_speed):
     return math.cos(theta)*wind_speed
 
 LR_only["LR_u"] = LR_only.apply(lambda LR_only: calculate_u(LR_only['LR_dif_rad'],LR_only['wind_speed']), axis=1)
 RL_only["RL_u"] = RL_only.apply(lambda RL_only: calculate_u(RL_only['RL_dif_rad'],RL_only['wind_speed']), axis=1)
-
+par1_only["par_u"] = par1_only.apply(lambda par1_only: calculate_u(par1_only['par_dif_rad'],par1_only['wind_speed']), axis=1)
+par2_only["par_u"] = par2_only.apply(lambda par2_only: calculate_u(par2_only['par_dif_rad'],par2_only['wind_speed']), axis=1)
 
 # weighting of wind sectors needed to give greater 'weight' to the wind speeds
 # and directions that occur more frequently, and vice versa
@@ -279,16 +311,23 @@ RL_only["RL_u"] = RL_only.apply(lambda RL_only: calculate_u(RL_only['RL_dif_rad'
 LR_freq = LR_only['fractional_occur'].sum()
 RL_freq = RL_only['fractional_occur'].sum()
 
+parallel = pd.concat([par1_only, par2_only])
+#print(parallel)
+par_freq = parallel['fractional_occur'].sum()
+#print(par_freq)
+
 def weighted_u(foccur,u,dir_freq):
     return (foccur*u)/dir_freq
 
 LR_only["LR_u_weighted"] = LR_only.apply(lambda LR_only: weighted_u(LR_only['fractional_occur'], LR_only['LR_u'],LR_freq), axis=1)
 RL_only["RL_u_weighted"] = RL_only.apply(lambda RL_only: weighted_u(RL_only['fractional_occur'], RL_only['RL_u'],RL_freq), axis=1)
-
+parallel["par_u_weighted"] = parallel.apply(lambda parallel: weighted_u(parallel['fractional_occur'], parallel['par_u'],par_freq), axis=1)
 
 # finally sum the fractional wind speed components
 LR_u = LR_only['LR_u_weighted'].sum()
 RL_u = RL_only['RL_u_weighted'].sum()
+par_u = parallel['par_u_weighted'].sum()
+#print(LR_u, RL_u, par_u)
 
 
 # checking
@@ -296,14 +335,16 @@ RL_u = RL_only['RL_u_weighted'].sum()
 #print(LR_only['LR_difference'])
 #print(LR_only['LR_dif_rad'])
 #print(LR_only['wind_speed'])
-#print(LR_only['LR_u'])
+#print("WIND CONDITIONS")
+#print("Background wind (ubg) left to right:", LR_u)
 
 
 #print(RL_only['wind_direction'], RL_only['street_dir_as_N'])
 #print(RL_only['RL_difference'])
 #print(RL_only['RL_dif_rad'])
 #print(RL_only['wind_speed'])
-#print(RL_only['RL_u'])
+#print("Background wind (ubg) right to left:", RL_u)
+#print("Parallel wind (ubg_par)", par_u)
 
 # _______________ assign values for use further in code _______________
 
@@ -313,18 +354,18 @@ ubg_orig = LR_u
 # wind speed right to left (m/s) - climatological average
 ubg_mir = RL_u
 
-# frequency of wind condition occurence (i.e. how often the wind is blowing L->R)
-LR_freq = LR_freq
-RL_freq = RL_freq
+ubg_parallel = par_u
 
-# therefore the parallel cases are half the remainder
-# still referred to as LR/RL as the model will run dispersion only but based
-# on the (potentially) different dimensioning
-LR_par_freq = (1-LR_freq-RL_freq)/2
-RL_par_freq = (1-LR_freq-RL_freq)/2
+LR_par_freq = par_freq/2
+RL_par_freq = par_freq/2
 
-#print(LR_freq, RL_freq, LR_par_freq, RL_par_freq)
+#print("L-->R Frequency:",LR_freq)
+#print("R-->L Frequency:", RL_freq)
+#print("Parallel Frequency:", par_freq)
+#print("Total time accounted for:", (LR_freq + RL_freq + par_freq))
+#print("")
 #sum([LR_freq, RL_freq, LR_par_freq, RL_par_freq])
+
 
 
 # ___________ extract GI intervention information ___________
@@ -1918,10 +1959,10 @@ w = roadw
 def ws_point(ubg,z,H,w):
     
     # firstly determine value of d based on street dimensions
-    if w <= (3*H):
+    if w <= (1.5*H):
         d = (0.7*H)
-    elif w > (3*H) and w <= (5*H):
-        d = (1.75*H)-(0.35*w)
+    elif w > (1.5*H) and w <= (5*H):
+        d = H-(0.2*w)
     else:
         d = 0
     
@@ -2194,7 +2235,7 @@ def no_barriers_pattern(row, h_cumu, rec_ncol, wa1, we1, ua1, ue1, U1, U2, U3, U
     
     # RFI: edge of recirc dispersion adjustment value
     # decrease dispersion at edge of recirc
-    dis = 0.01*Uh
+    dis = 0.05*Uh
 
     if rec_ncol > 0 and rec_ncol < 5:
         if row[0] == h_cumu[2]:
@@ -2873,30 +2914,68 @@ wa3_mir = new_barrier_mir[3]
 # print("wa3_mir")
 # print(wa3_mir)
 
+
 # ___________ Parallel wind: dispersion only ___________
 
 # we don't want any influence of recirculation zones; for these to occur wind 
 # would need to be across the street
 
-# determine ACH
-# diffusion at boundary between 'canyon' and air above from Lui et al 2015
+def ws_point_parallel(ubg,z,H):
+    # firstly set d
+    d = 0
+    
+    # calculate wind speed (u) at the height of shortest building (where log profile is still valid to)
+    uh = ubg*(math.log(5000)/math.log(500))*(math.log(5*H-5*d)/math.log(500-5*d))
+    
+    if z <= H:
+        # if determining wind speed at point below both building heights (H is set to minimum)
+        uz = uh*(z/H)
+    else:
+        # if determining wind speed at a point above smallest building (e.g. between building heights) employ log profile
+        #uz = ubg*(math.log(5000)/math.log(500))*(math.log(5*H-5*d)/math.log(500-5*d))
+        uz = ubg*(math.log(5000)/math.log(500))*(math.log(5*z-5*d)/math.log(500-5*d))
+        
+    return uz
 
-hb = np.array([0.050220445242621700,0.08079710966000090,0.11132828240100300,
-               0.14194339944960800,0.16935309231015000,0.20093573286600600,
-               0.23447311340516000,0.2661502802429710,0.2971943299070450,
-               0.39162616262406600,0.3373974717744690,0.5021058431332970,
-               0.7683252782298300,1.2562405019233200,1.9981998376352400,
-               3.3218595969318200,5.000314809594420])
-ACH = np.array([0.0727961068441183,0.07525731521502540,0.07479088280108210,
-                0.07138592617929660,0.0671476103112659,0.06248872788332970,
-                0.05698948972293910,0.05149413849933150,0.04852918312136570,
-                0.04259149849186860,0.04514055163406820,0.03960710842998850,
-                0.0370191859199602,0.03357924686712890,0.03140722659286670,
-                0.028386299325227800,0.027907428713579400])
 
-# calculate aspect ratio
-ar = ((row_original[0]+row_original[1])/2)/roadw
-ACH_value = np.interp(ar, xp = hb, fp = ACH)
+
+# function to determine average wind speed (u) across a row
+def ws_average_parallel(row_min, row_max, ubg, H):
+    dif = row_max - row_min
+    dif9 = dif/9
+    
+    u1 = ws_point_parallel(ubg=ubg, z = row_min, H=H)
+    u2 = ws_point_parallel(ubg=ubg, z = row_min+(1*dif9), H=H)
+    u3 = ws_point_parallel(ubg=ubg, z = row_min+(2*dif9), H=H)
+    u4 = ws_point_parallel(ubg=ubg, z = row_min+(3*dif9), H=H)
+    u5 = ws_point_parallel(ubg=ubg, z = row_min+(4*dif9), H=H)
+    u6 = ws_point_parallel(ubg=ubg, z = row_min+(5*dif9), H=H)
+    u7 = ws_point_parallel(ubg=ubg, z = row_min+(6*dif9), H=H)
+    u8 = ws_point_parallel(ubg=ubg, z = row_min+(7*dif9), H=H)
+    u9 = ws_point_parallel(ubg=ubg, z = row_min+(8*dif9), H=H)
+    u10 = ws_point_parallel(ubg=ubg, z = row_max, H=H)
+    
+    data = (u1,u2,u3,u4,u5,u6,u7,u8,u9,u10)
+    avg_u = mean(data)
+    
+    return avg_u
+
+
+#test = ws_point_parallel(ubg = ubg_parallel, z=50,H=min(row_original[0],row_original[1]))
+#print(test)
+
+#Uh_parallel = ws_point_parallel(ubg = ubg_parallel, z = min(row_original[0],row_original[1]), H = min(row_original[0],row_original[1]))
+# assumes that the rows don't change between original and mirror dimensioning
+ue_row1 = ws_average_parallel(row_min = 0, row_max = h_cumu_original[1], ubg = ubg_parallel, H = min(row_original[0],row_original[1]))
+ue_row2 = ws_average_parallel(row_min = h_cumu_original[1], row_max = h_cumu_original[2], ubg = ubg_parallel, H = min(row_original[0],row_original[1]))
+ue_row3 = ws_average_parallel(row_min = h_cumu_original[2], row_max = h_cumu_original[3], ubg = ubg_parallel, H = min(row_original[0],row_original[1]))
+
+we_row12 = ws_point_parallel(ubg = ubg_parallel, z=h_cumu_original[1], H=min(row_original[0],row_original[1]))
+we_row23 = ws_point_parallel(ubg = ubg_parallel, z=h_cumu_original[2], H=min(row_original[0],row_original[1]))
+we_row3b = ws_point_parallel(ubg = ubg_parallel, z=h_cumu_original[3], H=min(row_original[0],row_original[1]))
+
+#print(ue_row1, ue_row2, ue_row3)
+#print(we_row12, we_row23, we_row3b)
 
 # create empty containers
 # existing barriers, dimensioning based on wind left to right
@@ -2913,20 +2992,20 @@ wa2_par = np.zeros((5,6))   # advection - will remain 0
 
 # apply linear reductions of ACH from roof top for both horizontal and vertical
 ue1_par[1,1] = 0 #c11 to wall
-ue1_par[1,2] = ACH_value*0.8 #c11 and c12
-ue1_par[1,3] = ACH_value*0.8 #c12 and c13
-ue1_par[1,4] = ACH_value*0.8 #c13 and c14
-ue1_par[1,5] = ACH_value*0.8 #c14 and c15
+ue1_par[1,2] = ue_row1*0.1 #c11 and c12
+ue1_par[1,3] = ue_row1*0.1 #c12 and c13
+ue1_par[1,4] = ue_row1*0.1 #c13 and c14
+ue1_par[1,5] = ue_row1*0.1 #c14 and c15
 ue1_par[2,1] = 0 #c21 to wall
-ue1_par[2,2] = ACH_value*0.9 #c21 and c22
-ue1_par[2,3] = ACH_value*0.9 #c22 and c23
-ue1_par[2,4] = ACH_value*0.9 #c23 and c24
-ue1_par[2,5] = ACH_value*0.9 #c24 and c25
+ue1_par[2,2] = ue_row2*0.1 #c21 and c22
+ue1_par[2,3] = ue_row2*0.1 #c22 and c23
+ue1_par[2,4] = ue_row2*0.1 #c23 and c24
+ue1_par[2,5] = ue_row2*0.1 #c24 and c25
 ue1_par[3,1] = 0 #c31 to wall
-ue1_par[3,2] = ACH_value #c31 and c32
-ue1_par[3,3] = ACH_value #c32 and c33
-ue1_par[3,4] = ACH_value #c33 and c34
-ue1_par[3,5] = ACH_value #c34 and c35
+ue1_par[3,2] = ue_row3*0.1 #c31 and c32
+ue1_par[3,3] = ue_row3*0.1 #c32 and c33
+ue1_par[3,4] = ue_row3*0.1 #c33 and c34
+ue1_par[3,5] = ue_row3*0.1 #c34 and c35
 
 #vertical dispersion co-efficients
 #we[1,1] = 0 #ground to c11
@@ -2934,37 +3013,38 @@ ue1_par[3,5] = ACH_value #c34 and c35
 #we[1,3] = 0 #ground to c13
 #we[1,4] = 0 #ground to c14
 #we[1,5] = 0 #ground to c15
-we1_par[2,1] = ACH_value*0.8 #c11 to c21
-we1_par[2,2] = ACH_value*0.8 #c12 and c22
-we1_par[2,3] = ACH_value*0.8 #c13 and c23
-we1_par[2,4] = ACH_value*0.8 #c13 and c24
-we1_par[2,5] = ACH_value*0.8 #c15 and c25
-we1_par[3,1] = ACH_value*0.9 #c21 and c31
-we1_par[3,2] = ACH_value*0.9 #c22 and c32
-we1_par[3,3] = ACH_value*0.9 #c23 and c33
-we1_par[3,4] = ACH_value*0.9 #c24 and c34
-we1_par[3,5] = ACH_value*0.9 #c25 and c35
-we1_par[4,1] = ACH_value #c31 and cb
-we1_par[4,2] = ACH_value #c32 and cb
-we1_par[4,3] = ACH_value #c33 and cb
-we1_par[4,4] = ACH_value #c24 and cb
-we1_par[4,5] = ACH_value #c35 and cb
+we1_par[2,1] = we_row12*0.1 #c11 to c21
+we1_par[2,2] = we_row12*0.1 #c12 and c22
+we1_par[2,3] = we_row12*0.1 #c13 and c23
+we1_par[2,4] = we_row12*0.1 #c13 and c24
+we1_par[2,5] = we_row12*0.1 #c15 and c25
+we1_par[3,1] = we_row23*0.1 #c21 and c31
+we1_par[3,2] = we_row23*0.1 #c22 and c32
+we1_par[3,3] = we_row23*0.1 #c23 and c33
+we1_par[3,4] = we_row23*0.1 #c24 and c34
+we1_par[3,5] = we_row23*0.1 #c25 and c35
+we1_par[4,1] = we_row3b*0.1 #c31 and cb
+we1_par[4,2] = we_row3b*0.1 #c32 and cb
+we1_par[4,3] = we_row3b*0.1 #c33 and cb
+we1_par[4,4] = we_row3b*0.1 #c24 and cb
+we1_par[4,5] = we_row3b*0.1 #c35 and cb
 
+# apply linear reductions of ACH from roof top for both horizontal and vertical
 ue2_par[1,1] = 0 #c11 to wall
-ue2_par[1,2] = ACH_value*0.8 #c11 and c12
-ue2_par[1,3] = ACH_value*0.8 #c12 and c13
-ue2_par[1,4] = ACH_value*0.8 #c13 and c14
-ue2_par[1,5] = ACH_value*0.8 #c14 and c15
+ue2_par[1,2] = ue_row1*0.1 #c11 and c12
+ue2_par[1,3] = ue_row1*0.1 #c12 and c13
+ue2_par[1,4] = ue_row1*0.1 #c13 and c14
+ue2_par[1,5] = ue_row1*0.1 #c14 and c15
 ue2_par[2,1] = 0 #c21 to wall
-ue2_par[2,2] = ACH_value*0.9 #c21 and c22
-ue2_par[2,3] = ACH_value*0.9 #c22 and c23
-ue2_par[2,4] = ACH_value*0.9 #c23 and c24
-ue2_par[2,5] = ACH_value*0.9 #c24 and c25
+ue2_par[2,2] = ue_row2*0.1 #c21 and c22
+ue2_par[2,3] = ue_row2*0.1 #c22 and c23
+ue2_par[2,4] = ue_row2*0.1 #c23 and c24
+ue2_par[2,5] = ue_row2*0.1 #c24 and c25
 ue2_par[3,1] = 0 #c31 to wall
-ue2_par[3,2] = ACH_value #c31 and c32
-ue2_par[3,3] = ACH_value #c32 and c33
-ue2_par[3,4] = ACH_value #c33 and c34
-ue2_par[3,5] = ACH_value #c34 and c35
+ue2_par[3,2] = ue_row3*0.1 #c31 and c32
+ue2_par[3,3] = ue_row3*0.1 #c32 and c33
+ue2_par[3,4] = ue_row3*0.1 #c33 and c34
+ue2_par[3,5] = ue_row3*0.1 #c34 and c35
 
 #vertical dispersion co-efficients
 #we[1,1] = 0 #ground to c11
@@ -2972,21 +3052,42 @@ ue2_par[3,5] = ACH_value #c34 and c35
 #we[1,3] = 0 #ground to c13
 #we[1,4] = 0 #ground to c14
 #we[1,5] = 0 #ground to c15
-we2_par[2,1] = ACH_value*0.8 #c11 to c21
-we2_par[2,2] = ACH_value*0.8 #c12 and c22
-we2_par[2,3] = ACH_value*0.8 #c13 and c23
-we2_par[2,4] = ACH_value*0.8 #c13 and c24
-we2_par[2,5] = ACH_value*0.8 #c15 and c25
-we2_par[3,1] = ACH_value*0.9 #c21 and c31
-we2_par[3,2] = ACH_value*0.9 #c22 and c32
-we2_par[3,3] = ACH_value*0.9 #c23 and c33
-we2_par[3,4] = ACH_value*0.9 #c24 and c34
-we2_par[3,5] = ACH_value*0.9 #c25 and c35
-we2_par[4,1] = ACH_value #c31 and cb
-we2_par[4,2] = ACH_value #c32 and cb
-we2_par[4,3] = ACH_value #c33 and cb
-we2_par[4,4] = ACH_value #c24 and cb
-we2_par[4,5] = ACH_value #c35 and cb
+we2_par[2,1] = we_row12*0.1 #c11 to c21
+we2_par[2,2] = we_row12*0.1 #c12 and c22
+we2_par[2,3] = we_row12*0.1 #c13 and c23
+we2_par[2,4] = we_row12*0.1 #c13 and c24
+we2_par[2,5] = we_row12*0.1 #c15 and c25
+we2_par[3,1] = we_row23*0.1 #c21 and c31
+we2_par[3,2] = we_row23*0.1 #c22 and c32
+we2_par[3,3] = we_row23*0.1 #c23 and c33
+we2_par[3,4] = we_row23*0.1 #c24 and c34
+we2_par[3,5] = we_row23*0.1 #c25 and c35
+we2_par[4,1] = we_row3b*0.1 #c31 and cb
+we2_par[4,2] = we_row3b*0.1 #c32 and cb
+we2_par[4,3] = we_row3b*0.1 #c33 and cb
+we2_par[4,4] = we_row3b*0.1 #c24 and cb
+we2_par[4,5] = we_row3b*0.1 #c35 and cb
+
+
+# print("ue1_par")
+# print(ue1_par)
+# print("ua1_par")
+# print(ua1_par)
+# print("we1_par")
+# print(we1_par)
+# print("wa1_par")
+# print(wa1_par)
+
+# print("ue2_par")
+# print(ue2_par)
+# print("ua2_par")
+# print(ua2_par)
+# print("we2_par")
+# print(we2_par)
+# print("wa2_par")
+# print(wa2_par)
+
+# -----------------------------------------------------------------------------
 
 # create function to determine dispersion reduction based on obs at box boundary
 # where a barrier lies
